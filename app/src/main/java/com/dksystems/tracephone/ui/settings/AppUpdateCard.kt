@@ -24,6 +24,7 @@ import com.dksystems.tracephone.domain.model.AppRelease
 import com.dksystems.tracephone.domain.model.UpdateCheck
 import com.dksystems.tracephone.domain.model.UpdateCheckFailure
 import com.dksystems.tracephone.ui.update.AppUpdateViewModel
+import com.dksystems.tracephone.ui.update.InstallPermissionButton
 import com.dksystems.tracephone.ui.update.UpdateDownloadButton
 import com.dksystems.tracephone.ui.update.updateDownloadText
 
@@ -98,10 +99,13 @@ internal fun AppUpdateCard(
 }
 
 /**
- * 버튼 줄.
+ * 버튼 줄. 두 줄로 나눈다.
  *
- * 새 버전이 있을 때만 받기 버튼이 나타난다. 그 옆의 브라우저 링크는 **대체 경로**다 —
- * 앱 안에서 받는 길이 막히는 기기가 있을 수 있어 손으로 받는 방법을 남겨 둔다.
+ * 새 버전이 있으면 버튼이 넷까지 생기는데(다시 확인·받아서 설치·허용 화면·브라우저)
+ * 한 줄에 다 들어가지 않는다. **주 수단은 윗줄, 보조 수단은 아랫줄**로 둔다.
+ *
+ * 브라우저 링크는 **대체 경로**다 — 앱 안에서 받는 길이 막히는 기기가 있을 수 있어
+ * 손으로 받는 방법을 남겨 둔다.
  */
 @Composable
 private fun UpdateActions(
@@ -112,23 +116,34 @@ private fun UpdateActions(
     val uriHandler = LocalUriHandler.current
     val available = (updateCheck as? UpdateCheck.Available)?.release
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TextButton(
-            onClick = viewModel::recheck,
-            enabled = updateCheck !is UpdateCheck.Checking
-        ) {
-            Text(stringResource(recheckLabelOf(updateCheck)))
+    Column {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                onClick = viewModel::recheck,
+                enabled = updateCheck !is UpdateCheck.Checking
+            ) {
+                Text(stringResource(recheckLabelOf(updateCheck)))
+            }
+
+            if (available != null) {
+                UpdateDownloadButton(
+                    download = download,
+                    onDownload = { viewModel.downloadAndInstall(available) }
+                )
+            }
         }
 
         if (available != null) {
-            UpdateDownloadButton(
-                download = download,
-                onDownload = { viewModel.downloadAndInstall(available) },
-                onAllowInstall = viewModel::openInstallPermissionSettings
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (download is ApkDownload.InstallPermissionRequired) {
+                    InstallPermissionButton(
+                        onAllowInstall = viewModel::openInstallPermissionSettings
+                    )
+                }
 
-            TextButton(onClick = { uriHandler.openUri(available.downloadUrl) }) {
-                Text(stringResource(R.string.update_action_open_in_browser))
+                TextButton(onClick = { uriHandler.openUri(available.downloadUrl) }) {
+                    Text(stringResource(R.string.update_action_open_in_browser))
+                }
             }
         }
     }

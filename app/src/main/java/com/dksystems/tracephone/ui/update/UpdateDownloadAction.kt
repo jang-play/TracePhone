@@ -15,32 +15,43 @@ private const val PERCENT_SCALE = 100
 /**
  * 받기·설치 버튼. 배너와 설정 카드가 같은 것을 쓴다.
  *
- * 허용이 꺼져 있을 때 버튼의 뜻이 바뀐다 — 그 상태에서 '내려받아 설치'를 누르면 받기만 하고
- * 설치 화면이 뜨지 않으므로, 먼저 해야 할 일을 버튼이 직접 말한다.
+ * 뜻이 상태에 따라 바뀌지 않는다. 누르면 늘 '받아서 설치'를 시도하고, 허용이 없으면
+ * 그 사실이 상태로 돌아온다. 판단은 누르는 시점에 다시 한다.
  */
 @Composable
 internal fun UpdateDownloadButton(
     download: ApkDownload,
     onDownload: () -> Unit,
-    onAllowInstall: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val needsPermission = download is ApkDownload.InstallPermissionRequired
-
     TextButton(
-        onClick = if (needsPermission) onAllowInstall else onDownload,
+        onClick = onDownload,
         enabled = download !is ApkDownload.Downloading,
         modifier = modifier
     ) {
-        Text(
-            stringResource(
-                if (needsPermission) {
-                    R.string.update_action_allow_install
-                } else {
-                    R.string.update_action_download_and_install
-                }
-            )
-        )
+        Text(stringResource(R.string.update_action_download_and_install))
+    }
+}
+
+/**
+ * 허용이 꺼져 있을 때만 함께 나타나는 버튼.
+ *
+ * ### 받기 버튼과 하나로 묶지 않는다 — 실기기에서 겪은 막다른 길
+ * 처음에는 버튼 하나가 상태에 따라 '받아서 설치'와 '허용 화면 열기' 사이를 오갔다.
+ * 그랬더니 허용을 켜고 돌아온 뒤에도 그 버튼이 **설정 화면만 다시 열어**, 받기로 넘어갈
+ * 길이 없었다. 앱을 재시작하기 전까지 갇힌다.
+ *
+ * 원인은 **상태는 앱 수명 동안 남는데 허용 여부는 앱 밖에서 바뀐다**는 것이다.
+ * 밖에서 바뀌는 사실을 안에 쌓아 둔 상태로 판단하면 어긋난다. 그래서 둘을 따로 두고,
+ * 받기 버튼은 누를 때마다 허용 여부를 다시 묻게 했다.
+ */
+@Composable
+internal fun InstallPermissionButton(
+    onAllowInstall: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextButton(onClick = onAllowInstall, modifier = modifier) {
+        Text(stringResource(R.string.update_action_allow_install))
     }
 }
 

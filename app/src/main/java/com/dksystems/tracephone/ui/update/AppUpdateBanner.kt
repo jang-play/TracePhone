@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dksystems.tracephone.R
+import com.dksystems.tracephone.domain.model.ApkDownload
 
 /**
  * 새 버전이 나왔을 때만 요약 화면 맨 위에 나타나는 줄.
@@ -74,9 +75,14 @@ internal fun AppUpdateBanner(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 UpdateDownloadButton(
                     download = download,
-                    onDownload = { viewModel.downloadAndInstall(pending) },
-                    onAllowInstall = viewModel::openInstallPermissionSettings
+                    onDownload = { viewModel.downloadAndInstall(pending) }
                 )
+
+                if (download is ApkDownload.InstallPermissionRequired) {
+                    InstallPermissionButton(
+                        onAllowInstall = viewModel::openInstallPermissionSettings
+                    )
+                }
 
                 TextButton(onClick = { viewModel.dismiss(pending.versionCode) }) {
                     Text(stringResource(R.string.summary_update_banner_dismiss))
