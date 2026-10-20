@@ -296,7 +296,7 @@ git push
 
 git tag v0.2.0
 git push origin v0.2.0
-```
+```gi 
 
 Actions 탭에 `배포`가 나타난다. 통과하면
 
@@ -408,24 +408,66 @@ ADB="/c/Users/DKSYSTEMS/AppData/Local/Android/Sdk/platform-tools/adb.exe"
    versionName = "0.3.0"  // 사람이 읽는 이름. 태그와 같아야 한다
    ```
 
-2. 커밋하고 태그를 민다
+2. 커밋하고 **커밋된 값을 확인한 뒤** 태그를 민다
 
    ```bash
    git add app/build.gradle.kts
    git commit -m "0.3.0"
    git push
+   ```
+
+   여기서 멈추고 **커밋에 버전이 들어갔는지 확인한다.** 가장 자주 나는 실수다.
+
+   ```bash
+   # 아래 두 값이 같아야 한다. 다르면 커밋이 안 된 것이다.
+   grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts
+   git show HEAD:app/build.gradle.kts | grep -oP 'versionName = "\K[^"]+'
+   ```
+
+   같다면 태그를 만든다.
+
+   ```bash
    git tag v0.3.0
    git push origin v0.3.0
    ```
 
+   > **태그는 작업 트리가 아니라 커밋을 가리킨다.** 파일을 고쳐 놓고 커밋하지 않은 채
+   > 태그를 만들면 태그에는 **옛 버전**이 담긴다. 워크플로가 이것을 잡아 멈추지만,
+   > 태그를 지우고 다시 만들어야 해서 번거롭다.
+
 3. Actions 요약에 나온 JSON을 Firebase `latest`에 옮긴다
 
-태그를 잘못 밀었으면 지운다.
+### 잘못 만든 태그 고치기
+
+어느 태그가 어느 버전을 담고 있는지 먼저 본다.
 
 ```bash
+for t in $(git tag --list 'v*' --sort=version:refname); do
+  echo "$t -> $(git show "$t:app/build.gradle.kts" | grep -oP 'versionName = "\K[^"]+')"
+done
+```
+
+`v0.3.0 -> 0.2.2` 처럼 태그 이름과 값이 **다르게 나오는 태그**는 버전 변경이 커밋되지 않은
+상태로 만들어진 것이다. 이렇게 고친다.
+
+```bash
+# 1) 버전 변경을 커밋한다
+git add app/build.gradle.kts
+git commit -m "0.3.0"
+git push
+
+# 2) 잘못된 태그를 로컬과 원격에서 지운다
 git tag -d v0.3.0
 git push origin :refs/tags/v0.3.0
+
+# 3) 지금 커밋에 태그를 다시 만들어 민다
+git tag v0.3.0
+git push origin v0.3.0
 ```
+
+태그에 이미 Release가 만들어져 있었다면, 태그를 지우면 그 Release는 가리킬 대상이 없어진다.
+GitHub의 **Releases** 화면에서 그 Release도 함께 지운 뒤 다시 만드는 것이 깔끔하다.
+워크플로가 실패해 멈춘 태그에는 Release가 생기지 않았으므로 지울 것이 없다.
 
 ---
 
@@ -438,7 +480,7 @@ git push origin :refs/tags/v0.3.0
 | `SigningConfig "release" is missing required property` | 시크릿 이름의 철자가 틀렸다. 대문자와 밑줄까지 똑같아야 한다 |
 | `base64: invalid input` | base64를 만들 때 `-w0`을 빼서 줄바꿈이 섞였다 |
 | `서명이 기대값과 다릅니다` | 의도한 안전장치가 작동했다. 키스토어 시크릿을 다시 만든다 |
-| `태그 v… 과 versionName … 이 다릅니다` | `versionName`을 올리지 않고 태그를 만들었다 |
+| `태그 v… 이 가리키는 커밋의 versionName 은 …` | **버전 변경을 커밋하지 않고 태그를 만들었다.** 위 7단계의 '잘못 만든 태그 고치기' 참고 |
 | `versionCode가 … 에서 올라가지 않았습니다` | `versionCode`를 올리지 않았다. 올린 뒤 태그를 다시 만든다 |
 | `gh: Resource not accessible by integration` | 워크플로의 `permissions: contents: write`가 빠졌다 |
 | Release는 생겼는데 앱이 새 버전을 모른다 | 5-1단계(Firebase `latest` 갱신)를 빠뜨렸다 |

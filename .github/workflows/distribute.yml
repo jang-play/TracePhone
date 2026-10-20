@@ -55,12 +55,16 @@ jobs:
           VERSION_CODE=$(grep -oP 'versionCode = \K[0-9]+' app/build.gradle.kts)
           echo "versionName=$VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "versionCode=$VERSION_CODE" >> "$GITHUB_OUTPUT"
-          echo "build.gradle.kts: $VERSION_NAME ($VERSION_CODE)"
+          echo "태그가 가리키는 커밋: $(git log -1 --format='%h %s')"
+          echo "그 커밋의 build.gradle.kts: versionName=$VERSION_NAME versionCode=$VERSION_CODE"
 
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG_VERSION="${GITHUB_REF_NAME#v}"
             if [ "$TAG_VERSION" != "$VERSION_NAME" ]; then
-              echo "::error::태그 v$TAG_VERSION 과 versionName $VERSION_NAME 이 다릅니다. 둘을 맞춘 뒤 태그를 다시 만드세요."
+              echo "::error::태그 v$TAG_VERSION 이 가리키는 커밋의 versionName 은 '$VERSION_NAME' 입니다."
+              echo "::error::버전을 올렸지만 그 변경을 커밋하지 않고 태그를 만들었을 가능성이 가장 큽니다. 태그는 작업 트리가 아니라 커밋을 가리킵니다."
+              echo "::error::로컬에서 다음으로 확인하세요: git show HEAD:app/build.gradle.kts | grep versionName"
+              echo "::error::고치는 방법: git add app/build.gradle.kts && git commit && git push 뒤에 태그를 지우고 다시 만듭니다. doc/deploy.md 8단계 참고."
               exit 1
             fi
 
