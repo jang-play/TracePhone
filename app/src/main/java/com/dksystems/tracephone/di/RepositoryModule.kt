@@ -12,6 +12,8 @@ import com.dksystems.tracephone.data.repository.SystemUsageReaderImpl
 import com.dksystems.tracephone.data.repository.UsageRepositoryImpl
 import com.dksystems.tracephone.data.repository.UsageSynchronizerImpl
 import com.dksystems.tracephone.data.system.SystemThemeModeApplier
+import com.dksystems.tracephone.data.update.BuildConfigAppVersion
+import com.dksystems.tracephone.data.update.HttpLatestReleaseSource
 import com.dksystems.tracephone.data.system.UsagePermissionChecker
 import com.dksystems.tracephone.domain.alert.MonthlyLimitNotifier
 import com.dksystems.tracephone.domain.alert.UsageAlertNotifier
@@ -26,6 +28,8 @@ import com.dksystems.tracephone.domain.preferences.WidgetAppearancePreferences
 import com.dksystems.tracephone.domain.repository.SystemUsageReader
 import com.dksystems.tracephone.domain.repository.UsageRepository
 import com.dksystems.tracephone.domain.repository.UsageSynchronizer
+import com.dksystems.tracephone.domain.update.InstalledAppVersion
+import com.dksystems.tracephone.domain.update.LatestReleaseSource
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -116,4 +120,16 @@ abstract class RepositoryModule {
     abstract fun bindMonthlyLimitNotifier(
         implementation: SystemMonthlyLimitNotifier
     ): MonthlyLimitNotifier
+
+    @Binds
+    @Singleton
+    abstract fun bindLatestReleaseSource(
+        implementation: HttpLatestReleaseSource
+    ): LatestReleaseSource
+
+    @Binds
+    @Singleton
+    abstract fun bindInstalledAppVersion(
+        implementation: BuildConfigAppVersion
+    ): InstalledAppVersion
 }

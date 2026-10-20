@@ -24,6 +24,14 @@
         사용량 경고 알림용. Android 13(API 33)부터 런타임 권한이라
         설정 화면에서 사용자에게 요청한다.
     -->
+    <!--
+        이 앱은 사용 기록을 밖으로 보내지 않는다. 이 권한은 **받는 쪽으로만** 쓴다.
+        설정 화면에서 "새 버전이 나왔는지"를 묻는 HTTPS 요청 한 번이 전부이고,
+        그 요청에는 기기나 사용량에 관한 정보가 실리지 않는다.
+        확인 주소가 빌드에 설정되지 않으면 요청 자체가 일어나지 않는다.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application

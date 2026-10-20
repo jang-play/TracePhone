@@ -214,4 +214,17 @@
     <string name="app_label_tethering">테더링</string>
     <string name="app_label_system">시스템 (uid %1$d)</string>
     <string name="app_label_unknown">알 수 없는 앱 (uid %1$d)</string>
+
+    <string name="settings_update_title">앱 버전</string>
+    <string name="settings_update_installed">설치된 버전 %1$s</string>
+    <string name="settings_update_not_checked">새 버전이 있는지 아직 확인하지 않았습니다.</string>
+    <string name="settings_update_checking">확인하는 중…</string>
+    <string name="settings_update_up_to_date">설치된 %1$s 이 최신입니다.</string>
+    <string name="settings_update_available">새 버전 %1$s 이 나왔습니다.</string>
+    <string name="settings_update_failed_network">확인하지 못했습니다. 연결을 확인한 뒤 다시 눌러 주세요.</string>
+    <string name="settings_update_failed_malformed">버전 기록의 형식이 올바르지 않습니다. 다시 눌러도 같은 결과가 나옵니다.</string>
+    <string name="settings_update_failed_untrusted">내려받기 주소를 신뢰할 수 없어 열지 않았습니다.</string>
+    <string name="settings_update_action_check">확인</string>
+    <string name="settings_update_action_recheck">다시 확인</string>
+    <string name="settings_update_action_download">내려받기</string>
 </resources>

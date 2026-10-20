@@ -29,6 +29,9 @@ coroutines = "1.11.0"
 # AGP가 계측 테스트 클래스패스를 앱 APK의 버전으로 고정하므로, 앱 쪽을 room-testing이
 # 요구하는 버전으로 올려두지 않으면 계측 테스트에서 AbstractMethodError가 난다.
 kotlinxSerialization = "1.8.1"
+# org.json은 안드로이드 프레임워크에 들어 있지만 JVM 단위 테스트에서는 빈 껍데기다.
+# 업데이트 기록 파싱을 테스트하려면 실제 구현이 테스트 클래스패스에 있어야 한다.
+json = "20260814"
 
 junit = "4.13.2"
 androidxTestJunit = "1.3.0"
@@ -72,6 +75,7 @@ kotlinx-coroutines-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-coro
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test" }
 
+json = { group = "org.json", name = "json", version.ref = "json" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestJunit" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTest" }

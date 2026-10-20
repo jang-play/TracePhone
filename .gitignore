@@ -17,6 +17,11 @@ backup/
 # release 서명 키의 위치와 비밀번호.
 keystore.properties
 
+# 키스토어를 base64로 바꿔 둔 임시 파일. 시크릿에 붙여 넣은 뒤 지우는 것이 원칙이지만,
+# 잊고 남겨 두어도 저장소로 새지 않도록 미리 막는다. 이 파일은 서명 키 그 자체다.
+keystore.base64.txt
+*.base64
+
 # Kotlin 빌드 세션 파일.
 .kotlin/
 

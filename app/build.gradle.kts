@@ -23,6 +23,10 @@ fun releaseSigningValue(propertyName: String, environmentName: String): String? 
 
 val releaseKeystorePath = releaseSigningValue("storeFile", "RELEASE_STORE_FILE")
 
+// 새 버전 기록을 읽을 주소. gradle.properties에서 받고, 없으면 빈 문자열이 되어
+// 앱이 업데이트 확인 기능을 내보이지 않는다.
+val updateManifestUrl = providers.gradleProperty("tracephone.updateManifestUrl").getOrElse("")
+
 android {
     namespace = "com.dksystems.tracephone"
     compileSdk = 37
@@ -38,6 +42,8 @@ android {
         versionName = "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "UPDATE_MANIFEST_URL", "\"$updateManifestUrl\"")
     }
 
     // 기기에 이미 설치된 앱과 서명이 같아야 adb install -r로 덮어쓸 수 있다.
@@ -79,6 +85,9 @@ android {
 
     buildFeatures {
         compose = true
+
+        // 업데이트 기록 주소와 설치된 버전을 코드에서 읽기 위해 필요하다.
+        buildConfig = true
     }
 
     // 내보낸 Room 스키마를 계측 테스트에서 읽을 수 있게 자산으로 포함한다.
@@ -138,6 +147,7 @@ dependencies {
 
     testImplementation(platform(libs.kotlinx.coroutines.bom))
     testImplementation(libs.junit)
+    testImplementation(libs.json)
     testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(platform(libs.kotlinx.coroutines.bom))

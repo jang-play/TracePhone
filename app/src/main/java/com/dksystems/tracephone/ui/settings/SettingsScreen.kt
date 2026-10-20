@@ -148,6 +148,8 @@ fun SettingsScreen(
 
                 BackgroundRestrictionNotice()
             }
+
+            AppUpdateCard()
         }
     }
 }
