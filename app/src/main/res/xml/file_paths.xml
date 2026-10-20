@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    받은 APK를 시스템 설치 화면에 넘길 때 쓰는 경로.
+
+    cacheDir 아래만 연다. 사용 기록 DB(databases/)나 설정(datastore/)은 여기에 없으므로
+    설치 프로그램이 그쪽을 볼 수 없다.
+-->
+<paths>
+    <cache-path name="apk" path="apk/" />
+</paths>

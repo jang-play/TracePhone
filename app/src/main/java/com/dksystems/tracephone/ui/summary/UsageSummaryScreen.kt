@@ -32,6 +32,7 @@ import com.dksystems.tracephone.R
 import com.dksystems.tracephone.domain.model.AppListScale
 import com.dksystems.tracephone.domain.model.dailyReferenceBytesOf
 import com.dksystems.tracephone.domain.model.UsagePeriod
+import com.dksystems.tracephone.ui.update.AppUpdateBanner
 
 /**
  * 앱별 데이터 사용량 목록 화면.
@@ -122,6 +123,12 @@ fun UsageSummaryScreen(
                     .periodSwipe(navigation),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                // 새 버전이 있을 때만 나타난다. 앱을 켜면 가장 먼저 보이는 화면이라
+                // "시작할 때 확인"의 자리가 여기다.
+                AppUpdateBanner(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+
                 // 과거 기간을 볼 때도 남겨 둔다. 이 카드가 답하는 질문("이번 달 요금제를
                 // 넘기겠는가")은 사용자가 어느 날짜를 들여다보든 달라지지 않는다.
                 //

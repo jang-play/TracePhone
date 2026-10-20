@@ -15,7 +15,7 @@ Firebase에 적어 둔 버전 기록을 앱이 읽어 새 버전을 알리게** 
           ↓
   Firebase Realtime Database 의 latest 경로에 버전 JSON 붙여넣기 (손으로 한 번)
           ↓
-  앱 설정 화면이 HTTPS GET 한 번으로 읽고 "새 버전 0.3.0 이 나왔습니다" 표시
+  앱 설정 화면이 HTTPS GET 한 번으로 읽고 "새 버전 …이 나왔습니다" 표시
 ```
 
 역할이 이렇게 갈린다.
@@ -27,7 +27,55 @@ Firebase에 적어 둔 버전 기록을 앱이 읽어 새 버전을 알리게** 
 
 ---
 
-## 0. 시작 전에 반드시 읽을 것
+## 매번 하는 일 — 한눈에 보기
+
+코드를 고친 뒤 배포까지 여섯 걸음이다. 자세한 설명은 **1부**에 있다.
+
+| | 하는 일 | 어디서 |
+|---|---|---|
+| 1 | `app/build.gradle.kts`의 `versionCode`·`versionName` **둘 다** 올린다 | 편집기 |
+| 2 | 커밋하고 **커밋에 버전이 들어갔는지 확인한다** | 터미널 |
+| 3 | 푸시한다 | 터미널 |
+| 4 | `v<버전>` 태그를 만들어 민다 | 터미널 |
+| 5 | Actions의 `배포`가 초록색이 되는지 본다 | 브라우저 |
+| 6 | Firebase의 `latest` 세 값을 새 버전으로 바꾼다 | 브라우저 |
+
+2번을 건너뛰면 4번에서 막힌다. 가장 자주 나는 실수다 — **태그는 작업 트리가 아니라
+커밋을 가리킨다.**
+
+6번을 건너뛰면 배포는 됐는데 앱이 계속 "최신입니다"라고 말한다.
+
+### 복사해서 쓰는 명령 한 벌
+
+`0.5.0`과 `5`를 올릴 버전으로 바꿔 쓴다.
+
+```bash
+cd /d/project/TracePhone
+
+# --- 1. 버전을 올린다 (편집기에서 두 줄을 고친다) ---
+#   versionCode = 5
+#   versionName = "0.5.0"
+
+# --- 2. 커밋하고 확인한다 ---
+git add -A
+git status --short | grep -E "backup/|keystore|\.base64|local\.properties"   # 아무것도 안 나와야 한다
+git commit -m "0.5.0"
+
+# 두 줄의 값이 같아야 한다. 다르면 커밋이 안 된 것이다.
+grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts
+git show HEAD:app/build.gradle.kts | grep -oP 'versionName = "\K[^"]+'
+
+# --- 3~4. 푸시하고 태그를 민다 ---
+git push
+git tag v0.5.0
+git push origin v0.5.0
+```
+
+그리고 **5번(Actions 확인)**과 **6번(Firebase 갱신)**은 브라우저에서 한다.
+
+---
+
+## 반드시 알고 있어야 할 것
 
 ### (1) 서명이 바뀌면 누적 기록이 사라진다
 
@@ -76,22 +124,191 @@ MSYS_NO_PATHCONV=1 "$ADB" exec-out run-as com.dksystems.tracephone \
 * **소스 전부와 커밋 이력이 공개된다.** 한 번 올린 것은 지워도 복제본이 남을 수 있다
 * **Actions 로그가 공개된다.** 시크릿은 `***`로 가려지지만 그 밖의 출력은 그대로 보인다
 * Actions 실행 시간은 공개 저장소에서 **무료**다
-* `backup/`(실기기 DB 4.8 MB)은 **절대 올라가면 안 된다.** 2단계에서 직접 확인한다
+* `backup/`(실기기 DB 4.8 MB)은 **절대 올라가면 안 된다.** 1-2와 설정 C에서 직접 확인한다
 * **키스토어 파일이 새면 누구나 이 앱의 '업데이트'를 만들 수 있다.** 시크릿에만 두고,
   저장소에는 어떤 형태로도 넣지 않는다
 
 ---
 
-## 1단계 — GitHub 계정과 저장소
+## 1부. 수정한 뒤 배포하기
 
-### 1-1. 계정 만들기
+### 1-1. 버전을 올린다
+
+`app/build.gradle.kts`에서 **두 줄을 함께** 올린다.
+
+```kotlin
+versionCode = 5        // 기기가 '새 버전'으로 인식하는 숫자. 반드시 올린다
+versionName = "0.5.0"  // 사람이 읽는 이름. 태그와 같아야 한다
+```
+
+워크플로가 둘을 모두 검사한다.
+
+| 검사 | 어긋나면 |
+|---|---|
+| 태그 이름 == `versionName` | `태그 v… 이 가리키는 커밋의 versionName 은 …` 으로 멈춘다 |
+| `versionCode` > 직전 태그의 `versionCode` | `versionCode가 … 에서 올라가지 않았습니다` 로 멈춘다 |
+
+`versionCode`를 올리지 않으면 기기가 새 APK를 업데이트로 받아들이지 않는다.
+설치는 되지만 아무 일도 일어나지 않아 원인을 찾기 어렵다. 그래서 CI가 막는다.
+
+### 1-2. 커밋하고 — 커밋된 값을 확인한다
+
+```bash
+git add -A
+
+# 올라갈 목록에서 위험한 것을 걸러 본다. 아무것도 출력되지 않아야 정상이다.
+git status --short | grep -E "backup/|keystore|\.base64|local\.properties"
+
+git commit -m "0.5.0"
+```
+
+**여기서 멈추고 확인한다.** 가장 자주 나는 실수가 이 자리에서 생긴다.
+
+```bash
+# 두 값이 같아야 한다.
+grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts            # 작업 트리
+git show HEAD:app/build.gradle.kts | grep -oP 'versionName = "\K[^"]+'   # 커밋된 것
+```
+
+> **태그는 작업 트리가 아니라 커밋을 가리킨다.** 파일을 고쳐 놓고 커밋하지 않은 채
+> 태그를 만들면 태그에는 **옛 버전**이 담긴다. 실제로 `v0.2.1`과 `v0.3.0`이 그렇게
+> 만들어져 배포가 두 번 막혔다. 고치려면 태그를 지우고 다시 만들어야 해서 번거롭다
+> (3부의 '잘못 만든 태그 고치기').
+
+### 1-3. 푸시한다
+
+```bash
+git push
+```
+
+푸시만 해도 **`빌드와 테스트`** 워크플로가 돈다. 단위 테스트와 lint만 보므로 비밀값이
+필요 없다. 여기서 실패하면 배포는 시도하지 않는다.
+
+### 1-4. 태그를 밀어 배포한다
+
+배포는 **`v`로 시작하는 태그를 밀 때만** 돈다.
+
+```bash
+git tag v0.5.0
+git push origin v0.5.0
+```
+
+워크플로가 하는 일은 순서대로 이렇다.
+
+```
+단위 테스트 → 버전·태그 검사 → 키스토어 복원 → release APK 빌드
+          → 서명 지문 확인 → GitHub Release 생성(APK 첨부) → Firebase용 JSON 출력
+```
+
+### 1-5. Actions를 확인한다
+
+저장소 → **Actions** 탭 → `배포` 실행.
+
+통과하면 두 가지가 생긴다.
+
+* **Releases**에 `0.5.0`과 `TracePhone-0.5.0.apk`
+* 실행 요약(**Summary**)에 **Firebase에 붙여 넣을 JSON**
+
+같은 JSON이 Release 설명에도, Release 파일 목록의 `latest.json`에도 들어 있다.
+셋 중 어디서 복사해도 같다.
+
+함께 볼 것이 하나 더 있다. **`서명 지문 확인`** 단계를 펼쳐 둘 중 어느 쪽인지 본다.
+
+```
+서명 지문: 0a49f14ece7d3dbe70e9ebb5e9797f753e81467e     ← 비교까지 된 경우
+::warning::변수 EXPECTED_SIGNER_SHA1 이 없어 서명 검사를 건너뜁니다.   ← 건너뛴 경우
+```
+
+경고가 떴다면 **2부 설정 D**의 변수를 등록한다. 이 검사가 서명이 바뀐 APK가 기기로 흘러가
+누적 기록을 지우는 사고를 막는 장치다.
+
+### 1-6. Firebase의 `latest`를 갱신한다
+
+**이 한 걸음은 자동화되어 있지 않다.** Firebase에 쓰려면 서비스 계정이 필요하고, 그것이
+이 구성에서 피하려는 Google Cloud 절차다. 그래서 CI가 **붙여 넣을 내용을 대신 만들어 주고**,
+옮기는 것만 사람이 한다.
+
+Firebase 콘솔 → **Realtime Database** → **데이터** 탭 → `latest`의 세 값을 바꾼다.
+
+```json
+{
+  "versionCode": 5,
+  "versionName": "0.5.0",
+  "downloadUrl": "https://github.com/jang-play/TracePhone/releases/download/v0.5.0/TracePhone-0.5.0.apk"
+}
+```
+
+| 항목 | 규칙 |
+|---|---|
+| `versionCode` | 정수. 이 값이 **설치된 것보다 클 때만** 앱이 새 버전을 알린다 |
+| `versionName` | 빈 문자열이면 앱이 형식 오류로 본다 |
+| `downloadUrl` | **`https://github.com/` 으로 시작해야 한다.** 앱이 그 밖의 주소는 열지 않는다 |
+
+바꾼 뒤 브라우저로 주소를 직접 열어 확인한다.
+
+```
+https://tracephone-4ca52-default-rtdb.asia-southeast1.firebasedatabase.app/latest.json
+```
+
+> 이 단계를 빠뜨리면 **배포는 됐는데 앱은 계속 "최신입니다"라고 말한다.** 파일은
+> 올라갔지만 '무엇이 최신인가'를 알려 주는 쪽이 옛 값을 쥐고 있기 때문이다.
+
+### 1-7. 받아서 확인한다
+
+#### 다른 사람 / 다른 기기
+
+Release 페이지 주소를 알려 주면 된다. 로그인 없이 `.apk`를 내려받을 수 있다.
+
+```
+https://github.com/<내-사용자이름>/TracePhone/releases/latest
+```
+
+설치 뒤 **설정 → 애플리케이션 → 특별한 접근 권한 → 사용 정보 접근**을 켜야 동작한다.
+이 안내는 Release 설명에도 자동으로 들어간다.
+
+#### 앱 안에서 새 버전 확인
+
+앱 → **설정** 화면을 아래로 내리면 **앱 버전** 카드가 있다.
+
+* 화면에 들어오면 한 번 자동으로 확인한다
+* **다시 확인** 버튼으로 다시 물을 수 있다
+* 새 버전이 있으면 **내려받기** 버튼이 함께 나타난다
+* `gradle.properties`의 주소가 비어 있으면 **카드가 아예 보이지 않는다**
+
+통신은 이 카드가 보이는 동안에만 일어난다. 배경에서 주기적으로 확인하지 않는다.
+보내는 것은 요청 주소뿐이고, 기기나 사용량 정보는 실리지 않는다.
+
+#### 내 S23+ (누적 기록이 있는 기기)
+
+'반드시 알고 있어야 할 것'의 (2)대로 **debug 유지를 권한다.** release를 꼭 넣겠다면 먼저 백업하고 아래만 쓴다.
+
+```bash
+ADB="/c/Users/DKSYSTEMS/AppData/Local/Android/Sdk/platform-tools/adb.exe"
+
+# -r 은 기존 앱 위에 덮어쓴다는 뜻이다. 데이터가 보존된다.
+"$ADB" install -r app/build/outputs/apk/release/app-release.apk
+```
+
+`uninstall`은 **절대 쓰지 않는다.**
+설치가 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`로 실패하면 **서명이 다른 것이다.**
+그대로 멈추고 `keystore.properties`를 확인한다. 앱을 지워서 해결하려 하면 기록을 잃는다.
+
+---
+
+## 2부. 처음 한 번만 하는 설정
+
+아래는 **이미 끝난 일**이다. 새 PC에서 다시 시작하거나 설정이 깨졌을 때만 본다.
+
+### 설정 A — GitHub 계정과 저장소
+
+#### A-1. 계정 만들기
 
 1. <https://github.com/signup> 접속
 2. 이메일 → 비밀번호 → 사용자 이름(영문, 주소에 들어간다)
 3. 메일로 온 8자리 코드 입력
 4. 요금제는 **Free**
 
-### 1-2. 저장소 만들기
+#### A-2. 저장소 만들기
 
 오른쪽 위 `+` → **New repository**
 
@@ -108,13 +325,13 @@ MSYS_NO_PATHCONV=1 "$ADB" exec-out run-as com.dksystems.tracephone \
 
 ---
 
-## 2단계 — Firebase 프로젝트와 버전 기록
+### 설정 B — Firebase 프로젝트와 버전 기록
 
 Firebase는 **"지금 최신이 무엇인가"라는 한 줄만** 맡는다. 앱에 Firebase SDK를 넣지 않고,
 `google-services.json`도 쓰지 않는다. Realtime Database는 경로 뒤에 `.json`을 붙이면
 평범한 HTTPS GET으로 읽히기 때문이다.
 
-### 2-1. 프로젝트 만들기
+#### B-1. 프로젝트 만들기
 
 1. <https://console.firebase.google.com> 접속해 Google 계정으로 로그인
 2. **프로젝트 만들기**
@@ -125,7 +342,7 @@ Firebase는 **"지금 최신이 무엇인가"라는 한 줄만** 맡는다. 앱�
 > **안드로이드 앱을 등록하지 않아도 된다.** 앱 등록은 SDK를 쓸 때 필요한 절차다.
 > 우리는 데이터베이스만 읽으므로 건너뛴다.
 
-### 2-2. Realtime Database 만들기
+#### B-2. Realtime Database 만들기
 
 1. 왼쪽 메뉴 **빌드** → **Realtime Database** → **데이터베이스 만들기**
 2. 위치는 가까운 곳을 고른다 (예: `싱가포르 (asia-southeast1)`)
@@ -133,7 +350,7 @@ Firebase는 **"지금 최신이 무엇인가"라는 한 줄만** 맡는다. 앱�
    (테스트 모드는 **누구나 쓰기 가능**이라 버전 기록을 바꿔치기할 수 있다)
 4. **사용 설정**
 
-### 2-3. 규칙 — `latest`만 읽기 허용
+#### B-3. 규칙 — `latest`만 읽기 허용
 
 **규칙** 탭을 눌러 내용을 전부 지우고 아래로 바꾼 뒤 **게시**한다.
 
@@ -156,7 +373,7 @@ Firebase는 **"지금 최신이 무엇인가"라는 한 줄만** 맡는다. 앱�
 * **어디에도 쓸 수 없다** — 값은 콘솔에서만 바꾼다. 앱도, 남도 쓰지 못한다
 * 그 밖의 경로는 읽지도 못한다 — 나중에 다른 데이터를 두더라도 실수로 공개되지 않는다
 
-### 2-4. `latest` 값 넣기
+#### B-4. `latest` 값 넣기
 
 **데이터** 탭에서 루트의 `+`를 눌러 아래 구조를 만든다.
 
@@ -173,7 +390,7 @@ latest
 > 앱이 그 밖의 주소는 열지 않는다. 버전 기록은 공개 읽기이므로, 쓰기 권한이 새는 사고가
 > 나더라도 악성 주소로 유도되지 않게 막아 둔 것이다.
 
-### 2-5. 주소를 프로젝트에 적어 넣기
+#### B-5. 주소를 프로젝트에 적어 넣기
 
 **데이터** 탭 위쪽에 데이터베이스 주소가 보인다. 이런 모양이다.
 
@@ -198,7 +415,7 @@ tracephone.updateManifestUrl=https://tracephone-a1b2c-default-rtdb.asia-southeas
 
 ---
 
-## 3단계 — 올릴 수 없는 것부터 확인하고 첫 푸시
+### 설정 C — 올릴 수 없는 것 확인과 첫 푸시
 
 저장소가 **공개**이므로 이 확인을 건너뛰면 안 된다.
 
@@ -237,11 +454,11 @@ GitHub에 로그인하고 **Authorize**를 누른다. 한 번만 하면 된다.
 
 ---
 
-## 4단계 — 시크릿 4개와 변수 1개
+### 설정 D — 시크릿 4개와 변수 1개
 
 GitHub 저장소 → **Settings** → 왼쪽 **Secrets and variables** → **Actions**.
 
-### 4-1. Secrets 탭 — **New repository secret**으로 4개
+#### D-1. Secrets 탭 — **New repository secret**으로 4개
 
 | 이름 | 값 |
 |---|---|
@@ -270,7 +487,7 @@ rm keystore.base64.txt
 > 넣어 두었으므로 잊고 남겨 두어도 저장소로 새지 않지만, 지우는 것이 원칙이다.
 > 공개 저장소에 이 내용이 올라가면 **누구나 이 앱의 '업데이트'를 만들 수 있다.**
 
-### 4-2. Variables 탭 — **New repository variable**로 1개
+#### D-2. Variables 탭 — **New repository variable**로 1개
 
 | 이름 | 값 |
 |---|---|
@@ -285,157 +502,78 @@ rm keystore.base64.txt
 
 ---
 
-## 5단계 — 첫 배포
+## 3부. 문제가 생길 때
 
-배포는 **`v`로 시작하는 태그**를 밀 때만 돈다. 현재 버전은 `0.2.0`이다.
-
-```bash
-git add gradle.properties
-git commit -m "업데이트 확인 주소 설정"
-git push
-
-git tag v0.2.0
-git push origin v0.2.0
-```gi 
-
-Actions 탭에 `배포`가 나타난다. 통과하면
-
-* **Releases**에 `0.2.0`이 생기고 `TracePhone-0.2.0.apk`가 붙는다
-* 실행 요약(Summary)에 **Firebase에 붙여 넣을 JSON**이 출력된다
-
-### 5-1. Firebase의 `latest` 갱신
-
-워크플로가 만들어 준 JSON을 Firebase 콘솔 **데이터** 탭의 `latest` 아래 세 값에 옮긴다.
-
-```json
-{
-  "versionCode": 2,
-  "versionName": "0.2.0",
-  "downloadUrl": "https://github.com/.../releases/download/v0.2.0/TracePhone-0.2.0.apk"
-}
-```
-
-**이 한 걸음은 자동화되어 있지 않다.** Firebase에 쓰려면 서비스 계정이 필요하고,
-그것이 지금 피하려는 Google Cloud 절차다. 그래서 CI가 **붙여 넣을 내용을 대신 만들어 주고**,
-옮기는 것만 사람이 한다. 같은 JSON은 Release 설명에도 들어 있다.
-
-> 이 단계를 빠뜨리면 앱은 계속 "최신입니다"라고 말한다. 파일은 올라갔지만
-> 최신이 무엇인지 알려 주는 쪽이 옛 값을 쥐고 있기 때문이다.
-
-### Releases는 폴더가 아니다
-
-저장소의 **파일 목록에는 나타나지 않는다.** GitHub의 별도 기능이고, 자리는 세 곳이다.
-
-| 어디 | 어떻게 |
+| 증상 | 원인과 처방 |
 |---|---|
-| 주소로 직접 | `https://github.com/<내-사용자이름>/TracePhone/releases` |
-| 저장소 메인 화면 | **Code** 탭 오른쪽 사이드바의 **Releases** 칸 (창이 좁으면 파일 목록 **아래**로 내려간다) |
-| 태그 목록 | `.../tags` — 태그와 Release는 다른 것이다 |
+| `Permission denied` / `./gradlew: not found` | 워크플로의 `chmod +x ./gradlew` 단계가 빠졌다 |
+| `Failed to install the following Android SDK packages` | `platforms;android-37` 이름이 바뀌었다. 로그의 이름으로 워크플로를 고친다 |
+| `SigningConfig "release" is missing required property` | 시크릿 이름의 철자가 틀렸다. 대문자와 밑줄까지 똑같아야 한다 |
+| `base64: invalid input` | base64를 만들 때 `-w0`을 빼서 줄바꿈이 섞였다 |
+| `서명이 기대값과 다릅니다` | 의도한 안전장치가 작동했다. 키스토어 시크릿을 다시 만든다 |
+| `태그 v… 이 가리키는 커밋의 versionName 은 …` | **버전 변경을 커밋하지 않고 태그를 만들었다.** 3부의 '잘못 만든 태그 고치기' 참고 |
+| `versionCode가 … 에서 올라가지 않았습니다` | `versionCode`를 올리지 않았다. 올린 뒤 태그를 다시 만든다 |
+| `gh: Resource not accessible by integration` | 워크플로의 `permissions: contents: write`가 빠졌다 |
+| Release는 생겼는데 앱이 새 버전을 모른다 | 1-6(Firebase `latest` 갱신)을 빠뜨렸다 |
+| 앱에 **앱 버전** 카드가 안 보인다 | `gradle.properties`의 주소가 비었거나 `https`가 아니다. 그 상태로 빌드된 APK다 |
+| `버전 기록의 형식이 올바르지 않습니다` | Firebase의 `latest`에 세 항목이 다 있는지, `versionCode`가 숫자인지 본다 |
+| `내려받기 주소를 신뢰할 수 없어 열지 않았습니다` | `downloadUrl`이 `https://github.com/` 으로 시작하지 않는다 |
+| **`내려받기`를 눌렀더니 404** | **저장소가 비공개다.** GitHub은 비공개 저장소의 파일에 로그인 없는 요청에 로그인 화면이 아니라 404를 돌려준다. 폰 브라우저에는 GitHub 세션이 없다. 바로 아래 '내려받기가 404일 때' 참고 |
+| `확인하지 못했습니다` | 규칙에서 `latest`의 `.read`가 `true`인지, 브라우저로 그 주소가 열리는지 본다 |
 
-아직 아무것도 만들지 않았으면 `No releases published`만 보인다. **정상이다.**
-Release는 **`v` 태그를 밀고 워크플로가 성공한 뒤에** 생긴다. 손으로 만들 필요가 없다.
+### 내려받기가 404일 때
 
-순서를 기억하면 헷갈리지 않는다.
+> **이미 해결된 문제다.** 저장소가 비공개였던 동안 폰 브라우저에 GitHub 세션이 없어 404가
+> 났다. 2026-10-20에 저장소를 공개로 바꿔 해결됐다(이력 감사에서 키스토어·`backup/`·토큰이
+> 한 번도 커밋되지 않은 것을 확인한 뒤 바꿨다). 아래는 다시 같은 증상이 날 때를 위한 기록이다.
 
-```
-git push origin v0.2.0
-   → .../tags 에 태그가 곧바로 보인다
-   → Actions 에서 '배포'가 돈다 (몇 분)
-   → 성공하면 .../releases 에 0.2.0 이 생기고 APK가 붙는다
-```
+먼저 **어느 쪽 문제인지** 가른다. PC 브라우저(GitHub에 로그인된 곳)에서 그 주소를 연다.
 
-태그는 보이는데 Release가 없으면 **Actions 탭을 본다.** 워크플로가 아직 돌고 있거나
-실패한 것이다. 8단계의 표에서 오류 메시지를 찾는다.
+| PC에서 | 뜻 | 할 일 |
+|---|---|---|
+| 내려받아진다 | 파일은 있다. **비공개 저장소라서** 로그인 없는 폰이 못 받는 것이다 | 아래 셋 중 하나 |
+| 거기서도 404 | Release나 파일 이름이 다르다 | Actions의 `배포` 실행이 성공했는지, Release에 `TracePhone-<버전>.apk`가 붙었는지 본다 |
 
----
+비공개가 원인일 때의 선택지.
 
-## 6단계 — 받고 확인하기
+| 방법 | 결과 | 대가 |
+|---|---|---|
+| **저장소를 공개로 바꾼다** (권장) | 링크만 알면 누구나 받는다 | 소스와 커밋 이력이 공개된다. **되돌리기 어렵다** |
+| 폰 브라우저에서 GitHub에 로그인한다 | 내 폰에서는 받아진다 | 받는 사람마다 계정과 저장소 접근 권한이 필요하다 |
+| APK를 다른 곳에 둔다 | 비공개를 유지한다 | 앱이 `https://github.com/`만 신뢰하므로 `CheckForUpdateUseCase`의 `TRUSTED_DOWNLOAD_HOST`를 고쳐야 한다 |
 
-### 다른 사람 / 다른 기기
-
-Release 페이지 주소를 알려 주면 된다. 로그인 없이 `.apk`를 내려받을 수 있다.
-
-```
-https://github.com/<내-사용자이름>/TracePhone/releases/latest
-```
-
-설치 뒤 **설정 → 애플리케이션 → 특별한 접근 권한 → 사용 정보 접근**을 켜야 동작한다.
-이 안내는 Release 설명에도 자동으로 들어간다.
-
-### 앱 안에서 새 버전 확인
-
-앱 → **설정** 화면을 아래로 내리면 **앱 버전** 카드가 있다.
-
-* 화면에 들어오면 한 번 자동으로 확인한다
-* **다시 확인** 버튼으로 다시 물을 수 있다
-* 새 버전이 있으면 **내려받기** 버튼이 함께 나타난다
-* `gradle.properties`의 주소가 비어 있으면 **카드가 아예 보이지 않는다**
-
-통신은 이 카드가 보이는 동안에만 일어난다. 배경에서 주기적으로 확인하지 않는다.
-보내는 것은 요청 주소뿐이고, 기기나 사용량 정보는 실리지 않는다.
-
-### 내 S23+ (누적 기록이 있는 기기)
-
-0단계대로 **debug 유지를 권한다.** release를 꼭 넣겠다면 먼저 백업하고 아래만 쓴다.
+공개로 바꾸기 전에 **이력 전체**를 감사한다. 한 번 공개되면 복제본이 남을 수 있다.
 
 ```bash
-ADB="/c/Users/DKSYSTEMS/AppData/Local/Android/Sdk/platform-tools/adb.exe"
+# 위험한 경로가 이력에 들어간 적이 있나. 아무것도 안 나와야 한다.
+git log --all --pretty=format: --name-only --diff-filter=A | sort -u   | grep -Ei "backup/|\.keystore$|\.base64$|local\.properties|\.jks$|service-account"
 
-# -r 은 기존 앱 위에 덮어쓴다는 뜻이다. 데이터가 보존된다.
-"$ADB" install -r app/build/outputs/apk/release/app-release.apk
+# 커밋된 내용에 토큰·개인키가 있나
+git grep -I -l -E "ghp_|github_pat_|AIza|BEGIN PRIVATE KEY" $(git rev-list --all)
 ```
 
-`uninstall`은 **절대 쓰지 않는다.**
-설치가 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`로 실패하면 **서명이 다른 것이다.**
-그대로 멈추고 `keystore.properties`를 확인한다. 앱을 지워서 해결하려 하면 기록을 잃는다.
+바꾸는 곳: 저장소 → **Settings** → **General** → 맨 아래 **Danger Zone** →
+`Change repository visibility` → `Change to public` → 저장소 이름을 입력해 확인.
+
+> 공개로 바꾼 뒤에도 한 걸음 더 남는다. 브라우저로 내려받은 APK를 설치하려면
+> 폰에서 **그 브라우저에 '출처를 알 수 없는 앱 설치' 권한**을 허용해야 한다.
+> 설정 → 애플리케이션 → (브라우저) → 출처를 알 수 없는 앱 설치.
 
 ---
 
-## 7단계 — 다음 배포부터
+### 설치 화면이 뜨지 않을 때
 
-워크플로가 두 가지를 검사해 어긋나면 멈춘다.
+0.4.1부터 앱이 직접 APK를 받아 설치 화면을 띄운다. 그래도 뜨지 않는 경우가 있다.
 
-* **태그와 `versionName`이 같은지** — 같은 버전이 여러 번 올라가 어느 것이 최신인지
-  알 수 없게 되는 것을 막는다
-* **`versionCode`가 직전 태그보다 커졌는지** — 이름만 올리고 `versionCode`를 그대로 두면
-  기기가 새 APK를 업데이트로 받아들이지 않는다. 설치는 되지만 아무 일도 일어나지 않아
-  원인을 찾기 어렵다
+| 증상 | 처방 |
+|---|---|
+| 카드에 `설치하려면 이 앱에 출처를 알 수 없는 앱 설치를 허용해야 합니다` | `허용 화면 열기`를 누르고 TracePhone을 허용한 뒤 다시 누른다 |
+| 다 받았다는데 설치 화면이 안 뜬다 | 알림이나 **내 파일** 앱에서 받은 파일을 다시 열어 설치한다. 기기에 따라 설치 인텐트가 무시된다 |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | **서명이 다른 APK다. 앱을 지우면 누적 기록을 잃는다.** 멈추고 CI의 `서명 지문 확인` 단계를 본다 |
+| 앱 안에서 받는 길이 계속 막힌다 | 카드의 `브라우저로 열기`로 손수 받는다. 대체 경로로 남겨 둔 것이다 |
 
-1. `app/build.gradle.kts`에서 두 값을 올린다
-
-   ```kotlin
-   versionCode = 3        // 기기가 '새 버전'으로 인식하는 숫자. 반드시 올린다
-   versionName = "0.3.0"  // 사람이 읽는 이름. 태그와 같아야 한다
-   ```
-
-2. 커밋하고 **커밋된 값을 확인한 뒤** 태그를 민다
-
-   ```bash
-   git add app/build.gradle.kts
-   git commit -m "0.3.0"
-   git push
-   ```
-
-   여기서 멈추고 **커밋에 버전이 들어갔는지 확인한다.** 가장 자주 나는 실수다.
-
-   ```bash
-   # 아래 두 값이 같아야 한다. 다르면 커밋이 안 된 것이다.
-   grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts
-   git show HEAD:app/build.gradle.kts | grep -oP 'versionName = "\K[^"]+'
-   ```
-
-   같다면 태그를 만든다.
-
-   ```bash
-   git tag v0.3.0
-   git push origin v0.3.0
-   ```
-
-   > **태그는 작업 트리가 아니라 커밋을 가리킨다.** 파일을 고쳐 놓고 커밋하지 않은 채
-   > 태그를 만들면 태그에는 **옛 버전**이 담긴다. 워크플로가 이것을 잡아 멈추지만,
-   > 태그를 지우고 다시 만들어야 해서 번거롭다.
-
-3. Actions 요약에 나온 JSON을 Firebase `latest`에 옮긴다
+브라우저로 받은 경우에도 그 브라우저에 **출처를 알 수 없는 앱 설치** 권한이 필요하다.
+설정 → 애플리케이션 → (브라우저) → 출처를 알 수 없는 앱 설치.
 
 ### 잘못 만든 태그 고치기
 
@@ -471,27 +609,36 @@ GitHub의 **Releases** 화면에서 그 Release도 함께 지운 뒤 다시 만�
 
 ---
 
-## 8단계 — 문제가 생길 때
+### Releases는 폴더가 아니다
 
-| 증상 | 원인과 처방 |
+저장소의 **파일 목록에는 나타나지 않는다.** GitHub의 별도 기능이고, 자리는 세 곳이다.
+
+| 어디 | 어떻게 |
 |---|---|
-| `Permission denied` / `./gradlew: not found` | 워크플로의 `chmod +x ./gradlew` 단계가 빠졌다 |
-| `Failed to install the following Android SDK packages` | `platforms;android-37` 이름이 바뀌었다. 로그의 이름으로 워크플로를 고친다 |
-| `SigningConfig "release" is missing required property` | 시크릿 이름의 철자가 틀렸다. 대문자와 밑줄까지 똑같아야 한다 |
-| `base64: invalid input` | base64를 만들 때 `-w0`을 빼서 줄바꿈이 섞였다 |
-| `서명이 기대값과 다릅니다` | 의도한 안전장치가 작동했다. 키스토어 시크릿을 다시 만든다 |
-| `태그 v… 이 가리키는 커밋의 versionName 은 …` | **버전 변경을 커밋하지 않고 태그를 만들었다.** 위 7단계의 '잘못 만든 태그 고치기' 참고 |
-| `versionCode가 … 에서 올라가지 않았습니다` | `versionCode`를 올리지 않았다. 올린 뒤 태그를 다시 만든다 |
-| `gh: Resource not accessible by integration` | 워크플로의 `permissions: contents: write`가 빠졌다 |
-| Release는 생겼는데 앱이 새 버전을 모른다 | 5-1단계(Firebase `latest` 갱신)를 빠뜨렸다 |
-| 앱에 **앱 버전** 카드가 안 보인다 | `gradle.properties`의 주소가 비었거나 `https`가 아니다. 그 상태로 빌드된 APK다 |
-| `버전 기록의 형식이 올바르지 않습니다` | Firebase의 `latest`에 세 항목이 다 있는지, `versionCode`가 숫자인지 본다 |
-| `내려받기 주소를 신뢰할 수 없어 열지 않았습니다` | `downloadUrl`이 `https://github.com/` 으로 시작하지 않는다 |
-| `확인하지 못했습니다` | 규칙에서 `latest`의 `.read`가 `true`인지, 브라우저로 그 주소가 열리는지 본다 |
+| 주소로 직접 | `https://github.com/<내-사용자이름>/TracePhone/releases` |
+| 저장소 메인 화면 | **Code** 탭 오른쪽 사이드바의 **Releases** 칸 (창이 좁으면 파일 목록 **아래**로 내려간다) |
+| 태그 목록 | `.../tags` — 태그와 Release는 다른 것이다 |
+
+아직 아무것도 만들지 않았으면 `No releases published`만 보인다. **정상이다.**
+Release는 **`v` 태그를 밀고 워크플로가 성공한 뒤에** 생긴다. 손으로 만들 필요가 없다.
+
+순서를 기억하면 헷갈리지 않는다.
+
+```
+git push origin v0.2.0
+   → .../tags 에 태그가 곧바로 보인다
+   → Actions 에서 '배포'가 돈다 (몇 분)
+   → 성공하면 .../releases 에 0.2.0 이 생기고 APK가 붙는다
+```
+
+태그는 보이는데 Release가 없으면 **Actions 탭을 본다.** 워크플로가 아직 돌고 있거나
+실패한 것이다. 3부 맨 앞의 표에서 오류 메시지를 찾는다.
 
 ---
 
-## 바꾼 파일
+## 부록
+
+### 바꾼 파일
 
 | 파일 | 변경 |
 |---|---|
@@ -516,10 +663,13 @@ GitHub의 **Releases** 화면에서 그 Release도 함께 지운 뒤 다시 만�
 | `res/values/strings.xml` | 문구 12개 |
 | `.github/workflows/build.yml` | **새 파일.** 푸시마다 단위 테스트 + lint |
 | `.github/workflows/distribute.yml` | **새 파일.** 태그 → 빌드·서명확인 → GitHub Release + 붙여 넣을 JSON 생성 |
+| `work/UsageRefresher.kt` | **새 파일(0.4.0).** 당김 새로고침 — 동기화 + 위젯 갱신을 `@ApplicationScope`에서 |
+| `ui/summary/UsageSummaryViewModel.kt` | (0.4.0) `isRefreshing`·`refresh()` |
+| `ui/summary/UsageSummaryScreen.kt` | (0.4.0) `pullToRefresh(enabled = selection.isCurrent)` |
 
 새 런타임 의존성 0. Firebase SDK 0. 마이그레이션 0. DataStore 추가 0.
 
-## 확인한 것 / 확인하지 못한 것
+### 확인한 것 / 확인하지 못한 것
 
 확인한 것 (2026-10-20, 로컬)
 
@@ -558,11 +708,16 @@ GitHub의 **Releases** 화면에서 그 Release도 함께 지운 뒤 다시 만�
 * **release 빌드가 기기에서 동작하는지.** 이 기기에는 백업 경로를 지키려고 `debug`를 넣었다.
   R8은 빌드가 아니라 런타임에 깨지므로, Hilt 주입·Room 조회·주기 동기화·Glance 위젯은
   **다른 기기에서** 확인하는 것이 이 기기의 안전망을 지키는 방법이다
-* **CI가 만든 release APK의 서명.** 워크플로의 `서명 지문 확인` 단계가 실제로 비교했는지는
-  `EXPECTED_SIGNER_SHA1` 변수를 등록했는지에 달려 있다. 변수가 없으면 경고만 남기고 지나간다
+* **CI가 만든 release APK가 기기에서 도는지.** `v0.3.0`으로 내려받은
+  `TracePhone-0.3.0.apk`는 서명(`0a49f1…467e`, 폰의 키와 동일)·버전·권한·R8 적용·열거형
+  이름 보존까지 전부 확인했지만 **한 번도 실행되지 않았다**
+* **워크플로의 `서명 지문 확인` 단계가 실제로 비교했는지.** `EXPECTED_SIGNER_SHA1` 변수를
+  등록했는지에 달려 있다. 변수가 없으면 경고만 남기고 지나간다 — 1-5에서 확인한다
+* **당김 새로고침(0.4.0)의 실기기 동작.** 설치 직전 기기 연결이 끊겨 보류했다. 특히
+  가로 `periodSwipe`와 세로 당김이 **대각선 제스처**에서 서로를 가로채는지 확인이 남았다
 * Firebase 콘솔 화면의 메뉴 이름. Google이 수시로 바꾼다
 
-## 하지 않은 것
+### 하지 않은 것
 
 | 후보 | 이유 |
 |---|---|

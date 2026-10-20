@@ -61,5 +61,13 @@ enum class UpdateCheckFailure {
     MALFORMED,
 
     /** 내려받을 주소를 신뢰할 수 없다. 자세한 내용은 [AppRelease] 참조. */
-    UNTRUSTED_DOWNLOAD_URL
+    UNTRUSTED_DOWNLOAD_URL,
+
+    /**
+     * 예상하지 못한 실패.
+     *
+     * 연결 실패와 형식 오류는 위에서 이미 가린다. 그 둘로 설명되지 않는 것을
+     * 둘 중 하나로 둘러대면 사용자가 엉뚱한 조치를 하게 되므로 따로 둔다.
+     */
+    UNKNOWN
 }

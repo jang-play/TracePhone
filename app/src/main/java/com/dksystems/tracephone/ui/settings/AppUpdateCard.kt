@@ -19,15 +19,22 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dksystems.tracephone.R
+import com.dksystems.tracephone.domain.model.ApkDownload
 import com.dksystems.tracephone.domain.model.AppRelease
 import com.dksystems.tracephone.domain.model.UpdateCheck
 import com.dksystems.tracephone.domain.model.UpdateCheckFailure
+import com.dksystems.tracephone.ui.update.AppUpdateViewModel
+import com.dksystems.tracephone.ui.update.UpdateDownloadButton
+import com.dksystems.tracephone.ui.update.updateDownloadText
 
 /**
  * 설치된 버전과 새 버전 안내.
  *
  * 확인 주소가 빌드에 들어 있지 않으면 **카드 자체를 내보이지 않는다.** 누를 수 없는
  * 버튼이나 "지원하지 않습니다" 같은 문구를 두면, 사용자는 자기가 뭘 잘못했는지 찾게 된다.
+ *
+ * 요약 화면의 배너와 같은 상태를 본다([AppUpdateViewModel]이 앱 수명의 한 곳에 위임한다).
+ * 배너에서 받기를 시작하고 설정으로 넘어와도 진행률이 이어진다.
  */
 @Composable
 internal fun AppUpdateCard(
@@ -37,8 +44,9 @@ internal fun AppUpdateCard(
     if (!viewModel.isSupported) return
 
     val updateCheck by viewModel.updateCheck.collectAsStateWithLifecycle()
+    val download by viewModel.download.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) { viewModel.checkIfNeeded() }
+    LaunchedEffect(Unit) { viewModel.checkOnce() }
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -62,10 +70,29 @@ internal fun AppUpdateCard(
                 style = MaterialTheme.typography.bodyMedium
             )
 
+            updateDownloadText(download)?.let { status ->
+                Text(
+                    text = status,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             UpdateActions(
                 updateCheck = updateCheck,
-                onRecheck = viewModel::recheck
+                download = download,
+                viewModel = viewModel
             )
+
+            // 받아 놓고도 설치 화면이 뜨지 않는 경우가 있다. 실기기에서 겪은 일이라
+            // 그때 할 일을 미리 적어 둔다. 받기를 시작한 뒤에만 보여 카드를 늘리지 않는다.
+            if (download !is ApkDownload.Idle) {
+                Text(
+                    text = stringResource(R.string.update_install_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -73,24 +100,35 @@ internal fun AppUpdateCard(
 /**
  * 버튼 줄.
  *
- * 확인 중에는 다시 확인을 막는다. 연달아 누르면 같은 요청이 쌓이고, 사용자는
- * 어느 응답이 자기 것인지 알 수 없다.
+ * 새 버전이 있을 때만 받기 버튼이 나타난다. 그 옆의 브라우저 링크는 **대체 경로**다 —
+ * 앱 안에서 받는 길이 막히는 기기가 있을 수 있어 손으로 받는 방법을 남겨 둔다.
  */
 @Composable
-private fun UpdateActions(updateCheck: UpdateCheck, onRecheck: () -> Unit) {
+private fun UpdateActions(
+    updateCheck: UpdateCheck,
+    download: ApkDownload,
+    viewModel: AppUpdateViewModel
+) {
     val uriHandler = LocalUriHandler.current
+    val available = (updateCheck as? UpdateCheck.Available)?.release
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextButton(
-            onClick = onRecheck,
+            onClick = viewModel::recheck,
             enabled = updateCheck !is UpdateCheck.Checking
         ) {
             Text(stringResource(recheckLabelOf(updateCheck)))
         }
 
-        if (updateCheck is UpdateCheck.Available) {
-            TextButton(onClick = { uriHandler.openUri(updateCheck.release.downloadUrl) }) {
-                Text(stringResource(R.string.settings_update_action_download))
+        if (available != null) {
+            UpdateDownloadButton(
+                download = download,
+                onDownload = { viewModel.downloadAndInstall(available) },
+                onAllowInstall = viewModel::openInstallPermissionSettings
+            )
+
+            TextButton(onClick = { uriHandler.openUri(available.downloadUrl) }) {
+                Text(stringResource(R.string.update_action_open_in_browser))
             }
         }
     }
@@ -123,4 +161,5 @@ private fun failureTextOf(reason: UpdateCheckFailure): Int = when (reason) {
     UpdateCheckFailure.NETWORK -> R.string.settings_update_failed_network
     UpdateCheckFailure.MALFORMED -> R.string.settings_update_failed_malformed
     UpdateCheckFailure.UNTRUSTED_DOWNLOAD_URL -> R.string.settings_update_failed_untrusted
+    UpdateCheckFailure.UNKNOWN -> R.string.settings_update_failed_unknown
 }

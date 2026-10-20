@@ -226,5 +226,21 @@
     <string name="settings_update_failed_untrusted">내려받기 주소를 신뢰할 수 없어 열지 않았습니다.</string>
     <string name="settings_update_action_check">확인</string>
     <string name="settings_update_action_recheck">다시 확인</string>
-    <string name="settings_update_action_download">내려받기</string>
+
+    <string name="settings_update_failed_unknown">확인 중 예상하지 못한 문제가 생겼습니다.</string>
+
+    <string name="summary_update_banner_available">새 버전 %1$s 이 나왔습니다.</string>
+    <string name="summary_update_banner_dismiss">닫기</string>
+
+    <string name="update_action_download_and_install">내려받아 설치</string>
+    <string name="update_action_open_in_browser">브라우저로 열기</string>
+    <string name="update_action_allow_install">허용 화면 열기</string>
+    <string name="update_downloading">내려받는 중…</string>
+    <string name="update_downloading_with_progress">내려받는 중… %1$d%%</string>
+    <string name="update_ready">내려받았습니다.</string>
+    <string name="update_install_permission_required">설치하려면 이 앱에 출처를 알 수 없는 앱 설치를 허용해야 합니다.</string>
+    <string name="update_install_hint">설치 화면이 뜨지 않으면 알림이나 내 파일 앱에서 받은 파일을 다시 열어 주세요.</string>
+    <string name="update_failed_download">내려받지 못했습니다. 연결을 확인한 뒤 다시 눌러 주세요.</string>
+    <string name="update_failed_too_large">받은 파일이 APK로 보기엔 너무 큽니다. 버전 기록의 주소를 확인해 주세요.</string>
+    <string name="update_failed_storage">저장할 자리를 만들지 못했습니다.</string>
 </resources>

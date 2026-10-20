@@ -32,6 +32,15 @@
     -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!--
+        새 버전 APK를 앱 안에서 받아 설치 화면까지 띄우기 위해 필요하다.
+        이 권한만으로는 설치되지 않는다 — 사용자가 시스템 설정에서 이 앱에
+        "출처를 알 수 없는 앱 설치"를 따로 허용해야 하고, 설치 화면도 반드시 뜬다.
+        브라우저로 넘기는 방식은 실기기에서 설치가 막혀(받은 파일을 다시 열어야 했다)
+        이 경로를 골랐다.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -86,6 +95,24 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/tracephone_widget_info" />
         </receiver>
+
+        <!--
+            받은 APK를 시스템 설치 화면에 넘기는 통로.
+
+            안드로이드 7부터 file:// 주소를 다른 앱에 넘길 수 없어 이것이 필요하다.
+            exported=false이므로 다른 앱이 이 제공자를 직접 열 수는 없고, 설치 프로그램은
+            인텐트에 실어 보낸 일회성 읽기 권한으로만 파일을 본다.
+            열어 주는 범위는 @xml/file_paths가 정한 캐시의 apk/ 폴더 하나뿐이다.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 
