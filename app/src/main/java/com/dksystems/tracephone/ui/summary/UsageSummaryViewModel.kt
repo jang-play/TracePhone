@@ -19,6 +19,7 @@ import com.dksystems.tracephone.domain.usecase.EvaluateUsageAlertsUseCase
 import com.dksystems.tracephone.domain.usecase.GetAppUsageUseCase
 import com.dksystems.tracephone.domain.usecase.ObserveMonthlyLimitStatusUseCase
 import com.dksystems.tracephone.ui.SUBSCRIPTION_TIMEOUT_MILLIS
+import com.dksystems.tracephone.work.UsageRefresher
 import com.dksystems.tracephone.work.UsageSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -104,6 +105,7 @@ class UsageSummaryViewModel @Inject constructor(
     private val usageRepository: UsageRepository,
     private val usageViewPreferences: UsageViewPreferences,
     private val usageSyncScheduler: UsageSyncScheduler,
+    private val usageRefresher: UsageRefresher,
     private val evaluateUsageAlerts: EvaluateUsageAlertsUseCase,
     observeMonthlyLimitStatus: ObserveMonthlyLimitStatusUseCase,
     syncStatusPreferences: SyncStatusPreferences,
@@ -203,6 +205,17 @@ class UsageSummaryViewModel @Inject constructor(
         // 설정을 막 바꾼 직후에도 결과가 즉시 보이게 하기 위해서다.
         viewModelScope.launch { evaluateUsageAlerts() }
     }
+
+    /** 당김 새로고침이 돌고 있는가. 표시를 켜고 끄는 데 쓴다. */
+    val isRefreshing: StateFlow<Boolean> = usageRefresher.isRefreshing
+
+    /**
+     * 사용자가 목록을 당겨 새로고침했다.
+     *
+     * **현재 기간을 보고 있을 때만** 화면이 이 동작을 허용한다. 지난 기간의 합계는 이미
+     * 저장된 기록이라 다시 물어도 같은 값이 나오고, 돌려봐야 사용자의 시간만 쓴다.
+     */
+    fun refresh() = usageRefresher.refresh()
 
     fun selectUnit(unit: PeriodUnit) {
         selection.update { it.withUnit(unit) }
