@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    기본 크기를 4x2로 잡았다. 진행률만이면 1칸으로 충분하지만, 많이 쓴 앱까지 보여주려면
+    두 칸이 필요하다. 사용자가 직접 늘려야 앱 목록이 나온다면 있는 줄도 모르고 지나친다.
+
+    1칸으로 줄여도 진행률은 그대로 읽히도록 minHeight는 한 칸 높이로 둔다.
+    화면 구성은 TracePhoneWidget이 실제 크기를 보고 정한다.
+
+    updatePeriodMillis는 시스템이 30분 미만을 허용하지 않는다.
+    실제 갱신은 동기화 · 경고 판정 작업이 끝날 때 함께 수행하고, 이 값은 마지막 안전장치로 둔다.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:minHeight="60dp"
+    android:minWidth="180dp"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="4"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />

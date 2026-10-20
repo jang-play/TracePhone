@@ -1,0 +1,88 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "1a73688e25d95f03860541ce8c7d5057",
+    "entities": [
+      {
+        "tableName": "daily_app_usage",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`usageDate` TEXT NOT NULL, `uid` INTEGER NOT NULL, `networkKind` TEXT NOT NULL, `packageName` TEXT, `receivedBytes` INTEGER NOT NULL, `transmittedBytes` INTEGER NOT NULL, `recordedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`usageDate`, `uid`, `networkKind`))",
+        "fields": [
+          {
+            "fieldPath": "usageDate",
+            "columnName": "usageDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "networkKind",
+            "columnName": "networkKind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "receivedBytes",
+            "columnName": "receivedBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transmittedBytes",
+            "columnName": "transmittedBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordedAtEpochMillis",
+            "columnName": "recordedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "usageDate",
+            "uid",
+            "networkKind"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_daily_app_usage_usageDate",
+            "unique": false,
+            "columnNames": [
+              "usageDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_app_usage_usageDate` ON `${TABLE_NAME}` (`usageDate`)"
+          },
+          {
+            "name": "index_daily_app_usage_uid",
+            "unique": false,
+            "columnNames": [
+              "uid"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_daily_app_usage_uid` ON `${TABLE_NAME}` (`uid`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1a73688e25d95f03860541ce8c7d5057')"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    알림 표시줄용 작은 아이콘.
+    시스템이 실루엣으로만 그리므로 단색 흰색 도형만 쓴다. 색을 넣어도 무시된다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M4,15 L7,15 L7,20 L4,20 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M10.5,10 L13.5,10 L13.5,20 L10.5,20 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,4 L20,4 L20,20 L17,20 Z" />
+</vector>

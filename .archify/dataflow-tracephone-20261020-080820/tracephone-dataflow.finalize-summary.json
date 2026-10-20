@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "dataflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "D:\\project\\TracePhone\\.archify\\dataflow-tracephone-20261020-080820\\candidate.json",
+    "sha256": "dadba0d662a024549f53cd708d9aaf41b756196e103e5a3612ca97c8d56603cc",
+    "bytes": 8190
+  },
+  "artifact": {
+    "path": "D:\\project\\TracePhone\\.archify\\dataflow-tracephone-20261020-080820\\tracephone-dataflow.html",
+    "sha256": "9d86db7e24729d82db280dc5455fcd36f4d94ff9ad64d1e728a729f080845f0d",
+    "bytes": 845319
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "D:\\project\\TracePhone\\.archify\\dataflow-tracephone-20261020-080820\\tracephone-dataflow.finalize.json",
+    "summaryReceipt": "D:\\project\\TracePhone\\.archify\\dataflow-tracephone-20261020-080820\\tracephone-dataflow.finalize-summary.json",
+    "browserCheckReceipt": "D:\\project\\TracePhone\\.archify\\dataflow-tracephone-20261020-080820\\tracephone-dataflow.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 16832,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  },
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "resolvedCrossovers": 10,
+      "routesOverSuggestedBends": 5
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [
+        {
+          "left": {
+            "id": "room-period",
+            "from": "room",
+            "to": "period",
+            "label": "어제까지",
+            "collectionIndex": 7,
+            "artifactIndex": 8
+          },
+          "right": {
+            "id": "memo-alerts",
+            "from": "memo",
+            "to": "alerts",
+            "label": "하루 한도",
+            "collectionIndex": 15,
+            "artifactIndex": 16
+          },
+          "point": [
+            629.5,
+            376
+          ]
+        },
+        {
+          "left": {
+            "id": "room-applist",
+            "from": "room",
+            "to": "applist",
+            "label": "기간 집계",
+            "collectionIndex": 8,
+            "artifactIndex": 9
+          },
+          "right": {
+            "id": "memo-alerts",
+            "from": "memo",
+            "to": "alerts",
+            "label": "하루 한도",
+            "collectionIndex": 15,
+            "artifactIndex": 16
+          },
+          "point": [
+            629.5,
+            394
+          ]
+        },
+        {
+          "left": {
+            "id": "room-applist",
+            "from": "room",
+            "to": "applist",
+            "label": "기간 집계",
+            "collectionIndex": 8,
+            "artifactIndex": 9
+          },
+          "right": {
+            "id": "status-summary",
+            "from": "syncstatus",
+            "to": "summary",
+            "label": "확인 시각",
+            "collectionIndex": 18,
+            "artifactIndex": 19
+          },
+          "point": [
+            665,
+            455
+          ]
+        },
+        {
+          "left": {
+            "id": "period-history",
+            "from": "period",
+            "to": "history",
+            "label": "주기별",
+            "collectionIndex": 10,
+            "artifactIndex": 11
+          },
+          "right": {
+            "id": "status-summary",
+            "from": "syncstatus",
+            "to": "summary",
+            "label": "확인 시각",
+            "collectionIndex": 18,
+            "artifactIndex": 19
+          },
+          "point": [
+            745,
+            455
+          ]
+        },
+        {
+          "left": {
+            "id": "applist-summary",
+            "from": "applist",
+            "to": "summary",
+            "label": "앱별 목록",
+            "collectionIndex": 11,
+            "artifactIndex": 12
+          },
+          "right": {
+            "id": "limit-alerts",
+            "from": "limit",
+            "to": "alerts",
+            "label": "지점 도달",
+            "collectionIndex": 14,
+            "artifactIndex": 15
+          },
+          "point": [
+            856,
+            385
+          ]
+        },
+        {
+          "left": {
+            "id": "applist-summary",
+            "from": "applist",
+            "to": "summary",
+            "label": "앱별 목록",
+            "collectionIndex": 11,
+            "artifactIndex": 12
+          },
+          "right": {
+            "id": "memo-alerts",
+            "from": "memo",
+            "to": "alerts",
+            "label": "하루 한도",
+            "collectionIndex": 15,
+            "artifactIndex": 16
+          },
+          "point": [
+            852.5,
+            569
+          ]
+        },
+        {
+          "left": {
+            "id": "applist-summary",
+            "from": "applist",
+            "to": "summary",
+            "label": "앱별 목록",
+            "collectionIndex": 11,
+            "artifactIndex": 12
+          },
+          "right": {
+            "id": "history-cycle",
+            "from": "history",
+            "to": "cyclescreen",
+            "label": "끝난 주기",
+            "collectionIndex": 16,
+            "artifactIndex": 17
+          },
+          "point": [
+            852.5,
+            483
+          ]
+        },
+        {
+          "left": {
+            "id": "limit-alerts",
+            "from": "limit",
+            "to": "alerts",
+            "label": "지점 도달",
+            "collectionIndex": 14,
+            "artifactIndex": 15
+          },
+          "right": {
+            "id": "history-cycle",
+            "from": "history",
+            "to": "cyclescreen",
+            "label": "끝난 주기",
+            "collectionIndex": 16,
+            "artifactIndex": 17
+          },
+          "point": [
+            856,
+            483
+          ]
+        }
+      ],
+      "detours": [
+        {
+          "relationship": {
+            "id": "live-hourly",
+            "from": "live",
+            "to": "hourly",
+            "label": "근사 배분",
+            "collectionIndex": 5,
+            "artifactIndex": 6
+          },
+          "bends": 4,
+          "stretch": 1.214,
+          "directCorridorBlockers": [
+            {
+              "id": "memo",
+              "label": "TodayUsageMemo",
+              "box": [
+                474,
+                128,
+                112,
+                58
+              ]
+            }
+          ]
+        },
+        {
+          "relationship": {
+            "id": "limit-widget",
+            "from": "limit",
+            "to": "widget",
+            "label": "사용/한도",
+            "collectionIndex": 13,
+            "artifactIndex": 14
+          },
+          "bends": 4,
+          "stretch": 1.294
+        },
+        {
+          "relationship": {
+            "id": "memo-alerts",
+            "from": "memo",
+            "to": "alerts",
+            "label": "하루 한도",
+            "collectionIndex": 15,
+            "artifactIndex": 16
+          },
+          "bends": 4,
+          "stretch": 1
+        },
+        {
+          "relationship": {
+            "id": "history-cycle",
+            "from": "history",
+            "to": "cyclescreen",
+            "label": "끝난 주기",
+            "collectionIndex": 16,
+            "artifactIndex": 17
+          },
+          "bends": 4,
+          "stretch": 1.34
+        },
+        {
+          "relationship": {
+            "id": "status-summary",
+            "from": "syncstatus",
+            "to": "summary",
+            "label": "확인 시각",
+            "collectionIndex": 18,
+            "artifactIndex": 19
+          },
+          "bends": 4,
+          "stretch": 1
+        }
+      ],
+      "truncated": true
+    },
+    "repair": "Advisory only: this mode places or routes these relationships itself. Report them; do not remove relationships or meaning to reduce crossings."
+  }
+}

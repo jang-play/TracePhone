@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        PACKAGE_USAGE_STATS는 일반 런타임 권한이 아니다.
+        requestPermissions()로 받을 수 없고, 사용자가 시스템 설정의
+        "사용 정보 접근" 화면에서 직접 허용해야 한다.
+        UsagePermissionChecker가 AppOps로 실제 허용 여부를 확인한다.
+    -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!--
+        UID를 앱 이름으로 바꾸려면 설치된 패키지를 조회할 수 있어야 한다.
+        Play 스토어 배포 시에는 정당화 사유 제출이 필요하다.
+    -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!--
+        사용량 경고 알림용. Android 13(API 33)부터 런타임 권한이라
+        설정 화면에서 사용자에게 요청한다.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".TracePhoneApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TracePhone">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.TracePhone">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            Hilt가 WorkerFactory를 주입하려면 WorkManager의 기본 자동 초기화를 꺼야 한다.
+            초기화는 TracePhoneApplication이 Configuration.Provider로 담당한다.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <!--
+            홈 화면 위젯. 시스템이 만들고 갱신하므로 exported=true여야 한다.
+            내부 데이터를 외부로 내보내지 않고, 표시할 값은 앱이 직접 계산해 그린다.
+        -->
+        <receiver
+            android:name=".widget.TracePhoneWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tracephone_widget_info" />
+        </receiver>
+
+    </application>
+
+</manifest>

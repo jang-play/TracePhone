@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Compose가 실제 테마를 그리므로 여기서는 시작 화면 배경만 정의한다.
+        Material3 색상은 ui/theme/Theme.kt가 담당한다.
+    -->
+    <style name="Theme.TracePhone" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

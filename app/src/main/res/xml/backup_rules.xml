@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    누적 사용량 DB는 기기 이전 시에도 이어지는 편이 낫다.
+    별도 제외 규칙 없이 전체를 백업 대상으로 둔다. (Android 11 이하)
+-->
+<full-backup-content />

@@ -1,0 +1,24 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.keystore
+
+# 실기기에서 뽑은 실제 사용 기록 DB. 개인 데이터이므로 저장소에 넣지 않는다.
+backup/
+
+# release 서명 키의 위치와 비밀번호.
+keystore.properties
+
+# Kotlin 빌드 세션 파일.
+.kotlin/
+
+# 다이어그램 검증용 캡처. 필요하면 다시 생성할 수 있다.
+.archify/**/visual-check*/

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "4b744f67-0471-4a33-af84-4fc2d47dc171",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "D:\\project\\TracePhone\\.archify\\dataflow-tracephone-20261020-080820\\candidate.json",
+  "output": "D:\\project\\TracePhone\\.archify\\dataflow-tracephone-20261020-080820\\tracephone-dataflow.html",
+  "specification": {
+    "sha256": "c712db73ab6ad5c3b64ed5d421d7c1d15a346bd63c6a6a3de6f7563e77ee1a37",
+    "bytes": 8193
+  },
+  "artifact": {
+    "sha256": "a8fa085b7fa2b619cdbb577a095ab27c52aadb42289ab380cbca700a3758b118",
+    "bytes": 845331
+  }
+}

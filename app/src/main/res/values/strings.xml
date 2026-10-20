@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TracePhone</string>
+
+    <!-- 권한 화면 -->
+    <string name="permission_title">사용 정보 접근 권한이 필요합니다</string>
+    <string name="permission_description">앱별 데이터 사용량을 읽으려면 시스템의 \'사용 정보 접근\' 권한이 필요합니다. 이 권한은 앱이 직접 요청할 수 없어 설정 화면에서 직접 켜주셔야 합니다.</string>
+    <string name="permission_steps">설정 화면이 열리면 목록에서 TracePhone을 찾아 스위치를 켜고 돌아오세요.</string>
+    <string name="permission_open_settings">설정 열기</string>
+
+    <!-- 사용량 요약 화면 -->
+    <string name="summary_mobile">모바일</string>
+    <string name="summary_wifi">Wi-Fi</string>
+    <string name="summary_total">전체</string>
+    <string name="summary_empty">표시할 사용량 기록이 없습니다.</string>
+
+    <!-- 기간 단위 -->
+    <string name="period_unit_day">일</string>
+    <string name="period_unit_week">주</string>
+    <string name="period_unit_month">월</string>
+    <string name="period_all_time">전체 누적</string>
+
+    <!-- 기간 이동 -->
+    <string name="period_previous">이전 기간</string>
+    <string name="period_next">다음 기간</string>
+
+    <!--
+        기간 표시 형식. 번역 시 각 언어의 관례에 맞게 바꾼다.
+        패턴 문법은 java.time.format.DateTimeFormatter를 따른다.
+    -->
+    <string name="period_today">오늘</string>
+    <string name="date_pattern_day">yyyy년 M월 d일</string>
+    <string name="date_pattern_month">yyyy년 M월</string>
+    <string name="date_pattern_week_endpoint">M월 d일</string>
+    <string name="period_range_format">%1$s ~ %2$s</string>
+
+    <!-- 정렬 -->
+    <string name="sort_by_total">합계</string>
+    <string name="sort_by_mobile">모바일</string>
+    <string name="sort_by_wifi">Wi-Fi</string>
+    <string name="sort_by_mobile_background">백그라운드</string>
+
+    <!-- 상세 화면 -->
+    <string name="detail_title">일자별 사용량</string>
+    <string name="detail_received">수신</string>
+    <string name="detail_transmitted">송신</string>
+    <string name="detail_empty">이 앱의 사용량 기록이 없습니다.</string>
+    <string name="detail_tap_bar_hint">막대를 누르면 그 날을 시간대별로 볼 수 있습니다.</string>
+
+    <!-- 요금제 한도 -->
+    <string name="monthly_limit_title">이번 주기 한도</string>
+    <string name="monthly_limit_enable">요금제 한도 사용</string>
+    <string name="monthly_limit_enable_description">이번 청구 주기의 모바일 사용량을 한도와 견줍니다. Wi-Fi는 세지 않습니다.</string>
+    <string name="monthly_limit_amount_label">한도 (GB)</string>
+    <string name="monthly_limit_amount_hint">요금제의 데이터 제공량을 GB로 넣습니다. 예: 10, 5.5</string>
+    <string name="monthly_limit_cycle_label">청구 주기 시작일</string>
+    <string name="monthly_limit_cycle_hint">매월 이 날짜에 사용량이 0으로 초기화됩니다. 그 달에 없는 날짜면 그 달의 마지막 날로 잡습니다.</string>
+    <string name="monthly_limit_effective">현재 적용: %1$s · 매월 %2$d일 시작</string>
+    <string name="monthly_limit_not_configured">한도를 아직 넣지 않았습니다.</string>
+    <string name="monthly_limit_progress">%1$s / %2$s</string>
+    <string name="monthly_limit_remaining">남은 양 %1$s · %2$d일 남음</string>
+    <string name="monthly_limit_remaining_compact">남음 %1$s · %2$d일 · 하루 %3$s</string>
+    <string name="monthly_limit_exceeded">한도를 %1$s 넘겼습니다</string>
+    <string name="monthly_limit_cycle_range">%1$s ~ %2$s</string>
+
+    <!-- 위젯 -->
+    <string name="settings_theme_title">화면 모드</string>
+    <string name="settings_theme_description">기기 전체 설정과 따로 둘 수 있습니다.</string>
+    <string name="settings_theme_system">시스템 설정 따름</string>
+    <string name="settings_theme_light">밝게</string>
+    <string name="settings_theme_dark">어둡게</string>
+
+    <string name="widget_appearance_title">위젯 모양</string>
+    <string name="widget_appearance_description">위젯은 배경화면 위에 놓입니다. 배경화면에 맞춰 글자색과 투명도를 고릅니다.</string>
+    <string name="widget_text_color_label">글자색</string>
+    <string name="widget_text_color_auto">자동</string>
+    <string name="widget_text_color_white">흰색</string>
+    <string name="widget_text_color_black">검정</string>
+    <string name="widget_transparency_label">배경 투명도</string>
+    <string name="widget_transparency_value">%1$d%%</string>
+    <string name="widget_transparency_hint">오른쪽 끝으로 두면 배경 없이 글자만 보입니다.</string>
+    <string name="widget_title">모바일 데이터</string>
+    <string name="widget_description">이번 청구 주기의 모바일 사용량과 한도를 보여줍니다.</string>
+    <string name="widget_no_limit_hint">한도를 정하면 남은 양을 함께 보여줍니다</string>
+
+    <string name="monthly_limit_channel_name">요금제 한도</string>
+    <string name="monthly_limit_channel_description">이번 청구 주기의 모바일 사용량이 한도에 가까워지면 알립니다.</string>
+    <string name="monthly_limit_alert_title_warning">이번 주기 데이터를 %1$d%% 썼습니다</string>
+    <string name="monthly_limit_alert_title_reached">이번 주기 데이터 한도를 다 썼습니다</string>
+    <string name="monthly_limit_alert_message">%1$s / %2$s · %3$d일 남음</string>
+
+    <string name="state_split_title">화면을 보고 있었는가</string>
+    <string name="state_foreground">직접 사용</string>
+    <string name="state_background">백그라운드</string>
+    <string name="state_unknown">구분 없음</string>
+    <string name="state_mobile_background">모바일 백그라운드 %1$s</string>
+    <string name="state_split_value_format">%1$s (%2$d%%)</string>
+    <string name="state_split_explanation">‘직접 사용’은 앱 화면을 보고 있을 때 쓴 양입니다. 나머지는 앱이 뒤에서 스스로 쓴 양입니다.</string>
+    <string name="state_split_unknown_notice">이 구분을 기록하기 전에 쌓인 기간이 섞여 있습니다. 그 몫은 ‘구분 없음’으로 따로 표시합니다.</string>
+    <string name="state_split_all_unknown">이 기간에는 구분 정보가 없습니다. 시스템이 보관 중인 최근 기간부터 채워집니다.</string>
+    <string name="action_back">뒤로</string>
+
+    <!-- 시간대별 화면 -->
+    <!--
+        접근성 문구. 화면에는 보이지 않고 스크린 리더만 읽는다.
+        가운뎃점(·) 대신 쉼표를 쓴다. 읽어 주는 방식이 기기마다 달라 문장이 끊긴다.
+    -->
+    <string name="chart_bar_label">%1$s, %2$s</string>
+    <string name="chart_bar_no_usage">사용 없음</string>
+    <string name="chart_bar_date_pattern">M월 d일</string>
+    <string name="chart_daily_summary">일자별 사용량 그래프. %1$s부터 %2$s까지 %3$d일. 세로축 최대 %4$s. 막대를 하나씩 넘기면 그 날의 사용량을 읽습니다.</string>
+    <string name="chart_daily_summary_dense">일자별 사용량 그래프. %1$s부터 %2$s까지 %3$d일. 기간이 길어 날짜를 하나씩 읽지 않습니다. 가장 많이 쓴 날은 %4$s, %5$s입니다.</string>
+    <string name="chart_daily_bar_action">시간대별 보기</string>
+    <string name="chart_hourly_summary">시간대별 사용량 그래프. 0시부터 23시까지 24개 시간대. 세로축 최대 %1$s. 시간대를 하나씩 넘기면 값을 읽고, 두 번 탭하면 아래 카드에 자세히 나옵니다.</string>
+    <string name="chart_hourly_bar_action">이 시간대 보기</string>
+    <string name="summary_value_wifi">Wi-Fi %1$s</string>
+    <string name="summary_app_row_action">상세 보기</string>
+    <string name="summary_share_percent">%1$d%%</string>
+    <string name="summary_share_percent_minimal">&lt;1%</string>
+    <string name="summary_app_row_mobile">%1$s, 모바일 %2$s</string>
+    <string name="summary_app_row_share">전체의 %1$s</string>
+    <string name="accessibility_separator">, </string>
+    <string name="monthly_limit_bar_label">한도 사용 막대</string>
+    <string name="monthly_limit_bar_state">%1$d%% 사용, 주기의 %2$d%%가 지났습니다</string>
+
+    <string name="hourly_title">시간대별 사용량</string>
+    <string name="hourly_chart_title">시간대별 사용량</string>
+    <string name="hourly_axis_hour">%1$d시</string>
+    <string name="hourly_empty">이 날짜의 시간대별 기록이 없습니다. 시스템이 상세 기록을 오래 보관하지 않아 오래된 날짜는 조회되지 않을 수 있습니다.</string>
+    <string name="hourly_approximation_notice">시스템은 사용량을 시간 단위로 기록하지 않아 시간대별 값은 근사치입니다. 24개를 모두 더하면 그 날의 합계와 같습니다.</string>
+    <string name="monthly_limit_cycle_elapsed">%1$s · %2$d%% 지남</string>
+    <string name="monthly_limit_used_pace">%1$d%% · %2$s</string>
+    <string name="monthly_limit_used">%1$d%%</string>
+    <string name="monthly_limit_pace_faster">빠름</string>
+    <string name="monthly_limit_pace_on_track">적정</string>
+    <string name="monthly_limit_pace_slower">여유</string>
+    <string name="hourly_peak_label">가장 많이 쓴 시간대 (%1$d시 ~ %2$d시)</string>
+    <string name="hourly_selected_label">%1$d시 ~ %2$d시</string>
+    <string name="hourly_hour_total">합계</string>
+    <string name="hourly_tap_hint">막대를 누르면 그 시간대의 사용량이 여기에 나옵니다.</string>
+
+    <!-- 설정 화면 -->
+    <string name="settings_app_list_title">앱 목록 모양</string>
+    <string name="settings_app_list_description">같은 값을 두 가지로 보여줍니다. 막대를 또렷이 볼지, 한 화면에 더 많이 볼지 고르세요.</string>
+    <string name="settings_app_list_detailed">자세히</string>
+    <string name="settings_app_list_detailed_hint">이름 아래에 모바일 막대를 진하게 그립니다</string>
+    <string name="settings_app_list_compact">간단히</string>
+    <string name="settings_app_list_compact_hint">한 줄로 줄여 두 배로 보여줍니다. 크기는 줄 뒤 띠로 나타냅니다</string>
+    <string name="settings_title">설정</string>
+    <string name="action_settings">설정</string>
+
+    <string name="settings_alert_switch_title">사용량 경고</string>
+    <string name="settings_alert_switch_description">앱이 하루에 정해둔 양보다 모바일 데이터를 많이 쓰면 알려줍니다.</string>
+
+    <string name="settings_limit_title">앱당 하루 한도</string>
+    <string name="settings_limit_description">모바일 데이터 기준입니다. Wi-Fi는 경고하지 않습니다.</string>
+    <string name="settings_custom_limit_label">직접 입력 (MB)</string>
+    <string name="settings_custom_limit_apply">적용</string>
+    <string name="settings_custom_limit_hint">0을 넣으면 위에서 고른 값을 씁니다.</string>
+    <string name="settings_limit_effective">현재 적용: %1$s</string>
+
+    <string name="settings_notification_permission_title">알림이 꺼져 있습니다</string>
+    <string name="settings_notification_permission_description">알림을 허용해야 경고를 받을 수 있습니다.</string>
+    <string name="settings_notification_permission_action">알림 허용하기</string>
+
+    <string name="settings_battery_title">절전 기능 확인</string>
+    <string name="settings_battery_description">제조사 절전 기능이 백그라운드 동작을 멈추면 경고가 오지 않습니다. 앱 정보에서 배터리 항목을 \'제한 없음\'으로 두세요.</string>
+    <string name="settings_battery_action">앱 정보 열기</string>
+    <string name="settings_battery_status_unrestricted">지금은 \'제한 없음\'으로 되어 있습니다. 경고가 제때 옵니다.</string>
+    <string name="settings_battery_status_restricted">지금은 최적화 대상입니다. 폰을 오래 쓰지 않으면 경고가 몇 시간까지 밀릴 수 있습니다.</string>
+    <string name="settings_alert_interval_fast">경고는 %1$d분마다 확인합니다.</string>
+    <string name="settings_alert_interval_throttled">경고는 %1$d분마다 확인합니다. 화면을 끈 채 폰을 오래 두면 시스템이 확인을 미뤄 더 늦어질 수 있습니다.</string>
+
+    <!-- 경고 알림 -->
+    <string name="alert_channel_name">사용량 경고</string>
+    <string name="alert_channel_description">앱이 하루 모바일 데이터 한도를 넘었을 때 알립니다.</string>
+    <string name="alert_title">%1$s 데이터 사용량 초과</string>
+    <string name="alert_message">오늘 모바일 %1$s 사용 (한도 %2$s)</string>
+
+    <!-- UID 매핑 실패 시 대체 라벨 -->
+    <!-- 설치 목록에 없는 앱. '지워짐'이라 단정하지 않는다 - 조회 권한이 미치지 않는 UID일 수도 있다. -->
+    <string name="summary_app_not_installed">설치되지 않음</string>
+
+    <!-- 예측이지 사실이 아니다. '넘긴다'고 단정하지 않는다. -->
+    <string name="monthly_limit_projection">이 속도면 %1$s</string>
+
+    <!-- 마지막으로 확인한 시각. '수집한 기록'이 아니라 '확인함'이라고 적는다.
+         화면의 합계는 여러 날의 기록을 더한 값이라 '한 수집 시각'이라는 것이 없다. -->
+    <string name="summary_never_checked">아직 확인하지 않았습니다</string>
+    <string name="summary_checked_just_now">방금 확인함</string>
+    <string name="summary_checked_minutes">%1$d분 전에 확인함</string>
+    <string name="summary_checked_hours">%1$d시간 전에 확인함</string>
+    <string name="summary_checked_on">%1$s에 확인함</string>
+
+    <!-- 주기 이력 화면 -->
+    <string name="cycle_history_title">주기 이력</string>
+    <string name="cycle_history_action">주기 이력 보기</string>
+    <string name="cycle_history_current_title">이번 주기 (진행 중)</string>
+    <string name="cycle_history_current_range">%1$s ~ %2$s · %3$s까지</string>
+    <string name="cycle_history_current_notice">진행 중이라 아래 비교에는 넣지 않았습니다.</string>
+    <string name="cycle_history_finished_count">끝난 주기 %1$d개</string>
+    <string name="cycle_history_peak">가장 많이 쓴 주기</string>
+    <string name="cycle_history_average">평균</string>
+    <string name="cycle_history_cycle_name">%1$s 주기</string>
+    <string name="cycle_history_daily_average">하루 평균 %1$s</string>
+    <string name="cycle_history_limit_line">기준선은 지금 설정된 한도 %1$s입니다.</string>
+    <string name="cycle_history_limit_unknown">주기마다 그때의 한도를 남겨 두지 않으므로, 지난 주기가 그때 한도를 넘겼는지는 알 수 없습니다.</string>
+    <string name="cycle_history_truncated">더 오래된 기록도 있지만, 주기 전체가 기록된 최근 주기들만 보여줍니다.</string>
+    <string name="cycle_history_empty">아직 끝난 주기가 없습니다. 이번 주기가 끝나면 여기에 쌓입니다.</string>
+    <string name="cycle_history_no_limit">요금제 한도를 켜야 청구 주기를 셀 수 있습니다.</string>
+    <string name="cycle_history_mobile_only">모바일만 셉니다. Wi-Fi는 요금제 한도와 관계가 없습니다.</string>
+
+    <string name="app_label_removed">제거된 앱 (uid %1$d)</string>
+    <string name="app_label_tethering">테더링</string>
+    <string name="app_label_system">시스템 (uid %1$d)</string>
+    <string name="app_label_unknown">알 수 없는 앱 (uid %1$d)</string>
+</resources>

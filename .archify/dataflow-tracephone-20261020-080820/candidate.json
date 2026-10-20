@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "TracePhone 데이터 흐름",
+    "output": ".archify/dataflow-tracephone-20261020-080820/tracephone-dataflow.html",
+    "locale": "ko",
+    "quality_profile": "showcase"
+  },
+  "stages": [
+    { "label": "원천" },
+    { "label": "수집" },
+    { "label": "저장" },
+    { "label": "조회" },
+    { "label": "소비" }
+  ],
+  "nodes": [
+    {
+      "id": "netstats",
+      "type": "external",
+      "label": "NetworkStatsManager",
+      "sublabel": "안드로이드 시스템 통계",
+      "stage": 0,
+      "row": 2,
+      "tag": "유일한 원천"
+    },
+    {
+      "id": "live",
+      "type": "backend",
+      "label": "SystemUsageReader",
+      "sublabel": "오늘치·시간대별 직접 조회",
+      "stage": 1,
+      "row": 0,
+      "tag": "생값"
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "동기화",
+      "sublabel": "SyncUsageUseCase · Synchronizer",
+      "stage": 1,
+      "row": 3,
+      "tag": "6시간 · 진입 시"
+    },
+    {
+      "id": "memo",
+      "type": "backend",
+      "label": "TodayUsageMemo",
+      "sublabel": "오늘치 조회 30초 공유",
+      "stage": 2,
+      "row": 0
+    },
+    {
+      "id": "room",
+      "type": "database",
+      "label": "daily_app_usage",
+      "sublabel": "Room · 날짜 × 앱 × 회선",
+      "stage": 2,
+      "row": 2,
+      "tag": "영구 — 삭제 쿼리 없음"
+    },
+    {
+      "id": "syncstatus",
+      "type": "database",
+      "label": "마지막 확인",
+      "sublabel": "SyncStatusPreferences",
+      "stage": 2,
+      "row": 4
+    },
+    {
+      "id": "hourly",
+      "type": "backend",
+      "label": "시간대별 조회",
+      "sublabel": "GetHourlyUsageUseCase",
+      "stage": 3,
+      "row": 0,
+      "tag": "DB를 거치지 않음"
+    },
+    {
+      "id": "limit",
+      "type": "backend",
+      "label": "한도 현황",
+      "sublabel": "GetMonthlyLimitStatusUseCase",
+      "stage": 3,
+      "row": 1
+    },
+    {
+      "id": "period",
+      "type": "backend",
+      "label": "기간 모바일 합계",
+      "sublabel": "어제까지 DB + 오늘 생값",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "history",
+      "type": "backend",
+      "label": "주기 이력",
+      "sublabel": "GetBillingCycleHistoryUseCase",
+      "stage": 3,
+      "row": 3
+    },
+    {
+      "id": "applist",
+      "type": "backend",
+      "label": "앱별 목록",
+      "sublabel": "GetAppUsageUseCase",
+      "stage": 3,
+      "row": 4
+    },
+    {
+      "id": "hourlyscreen",
+      "type": "frontend",
+      "label": "시간대별 화면",
+      "sublabel": "0~23시 막대",
+      "stage": 4,
+      "row": 0
+    },
+    {
+      "id": "widget",
+      "type": "frontend",
+      "label": "홈 위젯",
+      "sublabel": "Glance",
+      "stage": 4,
+      "row": 1
+    },
+    {
+      "id": "summary",
+      "type": "frontend",
+      "label": "요약 화면",
+      "sublabel": "앱별 목록 · 한도 카드",
+      "stage": 4,
+      "row": 2
+    },
+    {
+      "id": "cyclescreen",
+      "type": "frontend",
+      "label": "주기 이력 화면",
+      "sublabel": "지난 주기 실적",
+      "stage": 4,
+      "row": 3
+    },
+    {
+      "id": "alerts",
+      "type": "external",
+      "label": "알림",
+      "sublabel": "앱 한도 · 요금제 지점",
+      "stage": 4,
+      "row": 4
+    }
+  ],
+  "flows": [
+    {
+      "id": "netstats-live",
+      "from": "netstats",
+      "to": "live",
+      "label": "오늘치",
+      "classification": "실시간",
+      "variant": "default"
+    },
+    {
+      "id": "netstats-sync",
+      "from": "netstats",
+      "to": "sync",
+      "label": "하루 버킷",
+      "classification": "최근 7일 / 90일",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-room",
+      "from": "sync",
+      "to": "room",
+      "label": "업서트",
+      "classification": "REPLACE",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-status",
+      "from": "sync",
+      "to": "syncstatus",
+      "label": "성공 시각",
+      "classification": "하루 이상 읽었을 때",
+      "variant": "default"
+    },
+    {
+      "id": "live-memo",
+      "from": "live",
+      "to": "memo",
+      "label": "30초 공유",
+      "classification": "중복 조회 제거",
+      "variant": "default"
+    },
+    {
+      "id": "live-hourly",
+      "from": "live",
+      "to": "hourly",
+      "label": "근사 배분",
+      "classification": "시간 버킷",
+      "variant": "default"
+    },
+    {
+      "id": "memo-period",
+      "from": "memo",
+      "to": "period",
+      "label": "오늘치",
+      "classification": "생값",
+      "variant": "default"
+    },
+    {
+      "id": "room-period",
+      "from": "room",
+      "to": "period",
+      "label": "어제까지",
+      "classification": "저장된 과거",
+      "variant": "default"
+    },
+    {
+      "id": "room-applist",
+      "from": "room",
+      "to": "applist",
+      "label": "기간 집계",
+      "classification": "앱별 합계",
+      "variant": "emphasis"
+    },
+    {
+      "id": "period-limit",
+      "from": "period",
+      "to": "limit",
+      "label": "주기 합계",
+      "classification": "청구 주기",
+      "variant": "default"
+    },
+    {
+      "id": "period-history",
+      "from": "period",
+      "to": "history",
+      "label": "주기별",
+      "classification": "거슬러 올라가며",
+      "variant": "default"
+    },
+    {
+      "id": "applist-summary",
+      "from": "applist",
+      "to": "summary",
+      "label": "앱별 목록",
+      "classification": "정렬·필터",
+      "variant": "emphasis"
+    },
+    {
+      "id": "limit-summary",
+      "from": "limit",
+      "to": "summary",
+      "label": "한도 카드",
+      "classification": "이번 주기",
+      "variant": "default"
+    },
+    {
+      "id": "limit-widget",
+      "from": "limit",
+      "to": "widget",
+      "label": "사용/한도",
+      "classification": "이번 주기",
+      "variant": "default"
+    },
+    {
+      "id": "limit-alerts",
+      "from": "limit",
+      "to": "alerts",
+      "label": "지점 도달",
+      "classification": "50·80·90·100%",
+      "variant": "default"
+    },
+    {
+      "id": "memo-alerts",
+      "from": "memo",
+      "to": "alerts",
+      "label": "하루 한도",
+      "classification": "앱별 배수",
+      "variant": "default"
+    },
+    {
+      "id": "history-cycle",
+      "from": "history",
+      "to": "cyclescreen",
+      "label": "끝난 주기",
+      "classification": "전체 기록된 것만",
+      "variant": "default"
+    },
+    {
+      "id": "hourly-screen",
+      "from": "hourly",
+      "to": "hourlyscreen",
+      "label": "0~23시",
+      "classification": "근사치",
+      "variant": "default"
+    },
+    {
+      "id": "status-summary",
+      "from": "syncstatus",
+      "to": "summary",
+      "label": "확인 시각",
+      "classification": "현재 기간만",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "영구 누적이 이 앱의 존재 이유",
+      "items": [
+        "시스템은 상세 이력을 수 주~90일만 보관하고 지운다",
+        "daily_app_usage에는 삭제·정리 쿼리가 하나도 없다",
+        "실측 119일 연속 · 15,751행 · 증가 속도 연 7.7 MB"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "오늘치는 DB를 건너뛴다",
+      "items": [
+        "저장소는 6시간 주기라 오늘치를 읽으면 최대 6시간 뒤처진다",
+        "한도·알림·위젯은 시스템 생값을 쓰고 TodayUsageMemo가 30초 동안 나눠 쓴다",
+        "기간 합계는 '어제까지 DB + 오늘 생값'으로 더해 두 번 세지 않는다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "시간대별만 휘발된다",
+      "items": [
+        "시간대별은 Room에 저장하지 않고 매번 시스템을 다시 조회한다",
+        "값은 시간 버킷을 비례 배분한 근사치라 화면이 그 사실을 밝힌다",
+        "시스템 보관 기간이 지난 날짜는 영구히 볼 수 없다 — 일자별과 비대칭"
+      ]
+    }
+  ]
+}
