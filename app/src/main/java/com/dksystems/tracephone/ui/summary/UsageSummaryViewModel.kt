@@ -10,6 +10,7 @@ import com.dksystems.tracephone.domain.model.UsagePeriod
 import com.dksystems.tracephone.domain.model.UsageSortOrder
 import com.dksystems.tracephone.domain.model.AppListLayout
 import com.dksystems.tracephone.core.SyncAge
+import com.dksystems.tracephone.core.coroutineFailureLogger
 import com.dksystems.tracephone.core.nextSyncAgeRefresh
 import com.dksystems.tracephone.core.syncAgeOf
 import com.dksystems.tracephone.domain.preferences.SyncStatusPreferences
@@ -203,7 +204,10 @@ class UsageSummaryViewModel @Inject constructor(
 
         // 15분 주기 워커를 기다리지 않고 지금 바로 판정한다.
         // 설정을 막 바꾼 직후에도 결과가 즉시 보이게 하기 위해서다.
-        viewModelScope.launch { evaluateUsageAlerts() }
+        //
+        // 판정은 '이미 알린 앱'을 설정에 쓴다. 저장이 실패하면 예외가 올라오고, 받는 곳이
+        // 없으면 **앱을 켜는 것만으로** 프로세스가 죽는다. 그래서 처리기를 함께 건다.
+        viewModelScope.launch(coroutineFailureLogger) { evaluateUsageAlerts() }
     }
 
     /** 당김 새로고침이 돌고 있는가. 표시를 켜고 끄는 데 쓴다. */
@@ -219,7 +223,7 @@ class UsageSummaryViewModel @Inject constructor(
 
     fun selectUnit(unit: PeriodUnit) {
         selection.update { it.withUnit(unit) }
-        viewModelScope.launch { usageViewPreferences.setPeriodUnit(unit) }
+        viewModelScope.launch(coroutineFailureLogger) { usageViewPreferences.setPeriodUnit(unit) }
     }
 
     /** 한 칸 과거로 이동한다. 더 갈 곳이 없으면 화면이 화살표를 막으므로 여기서는 확인하지 않는다. */
@@ -238,7 +242,7 @@ class UsageSummaryViewModel @Inject constructor(
 
     fun selectSortOrder(order: UsageSortOrder) {
         sortOrder.update { order }
-        viewModelScope.launch { usageViewPreferences.setSortOrder(order) }
+        viewModelScope.launch(coroutineFailureLogger) { usageViewPreferences.setSortOrder(order) }
     }
 
     /**
@@ -250,7 +254,7 @@ class UsageSummaryViewModel @Inject constructor(
      * '몇 칸 전인지'는 복원하지 않는다. 항상 현재 칸에서 시작한다.
      */
     private fun restoreLastViewedConditions() {
-        viewModelScope.launch {
+        viewModelScope.launch(coroutineFailureLogger) {
             selection.value = PeriodSelection(usageViewPreferences.periodUnit.first())
             sortOrder.value = usageViewPreferences.sortOrder.first()
         }

@@ -5,13 +5,15 @@ import com.dksystems.tracephone.domain.model.UsageSyncResult
 import com.dksystems.tracephone.domain.preferences.SyncStatusPreferences
 import com.dksystems.tracephone.domain.repository.UsageRepository
 import com.dksystems.tracephone.domain.repository.UsageSynchronizer
+import kotlinx.coroutines.flow.first
 import java.time.Clock
+import java.time.Duration
 import javax.inject.Inject
 
 /**
  * 시스템 통계를 저장소로 옮긴다.
  *
- * 최초 실행이면 긴 백필을, 그 뒤로는 최근 며칠만 다시 훑는다.
+ * 최초 실행이면 긴 백필을, 그 뒤로는 **마지막 확인 이후 지난 만큼** 다시 훑는다.
  * "얼마나 거슬러 올라갈지"를 판단하는 책임을 한곳에 모아 호출부가 신경 쓰지 않게 한다.
  */
 class SyncUsageUseCase @Inject constructor(
@@ -38,12 +40,46 @@ class SyncUsageUseCase @Inject constructor(
         val dayCount = if (needsInitialBackfill) {
             SyncConstants.INITIAL_BACKFILL_DAYS
         } else {
-            SyncConstants.RECENT_BACKFILL_DAYS
+            daysToRecheck()
         }
 
         val result = synchronizer.syncRecentDays(dayCount)
         recordIfChecked(result)
         return result
+    }
+
+    /**
+     * 평소 동기화에서 거슬러 올라갈 날수. **멈춰 있던 기간만큼 늘어난다.**
+     *
+     * ### 고정 일수로는 기록을 잃는다
+     * 저장된 기록이 하나라도 있으면 긴 백필 조건이 다시 성립하지 않으므로, 고정 일수를 쓰면
+     * **그보다 오래 멈춰 있던 기간을 아무도 읽지 않는다.** 앱을 강제 종료해 두거나, 폰을
+     * 보름 꺼 두거나, Doze가 워커를 미루거나, 오래된 백업을 새 기기에 복원하면 그렇게 된다.
+     * 시스템은 그 기록을 머지않아 지우고, 그러면 복구할 방법이 없다.
+     *
+     * 지난 날수에 1을 더하는 것은 **확인한 그 날 자체도 다시 읽어야** 하기 때문이다.
+     * 마지막 확인은 그 날의 한가운데에 있었고, 그 뒤에 쓴 양은 아직 저장되지 않았다.
+     *
+     * ### 확인 기록이 없으면 길게 훑는다
+     * 저장된 기록은 있는데 확인 시각이 없다면 공백의 크기를 알 수 없다. 모르는 채 짧게
+     * 훑으면 조용히 잃는 쪽이고, 길게 훑으면 시스템이 보관하지 않는 날짜를 몇 번 헛도는
+     * 정도가 전부다. 어느 쪽이 더 나쁜지가 분명하다.
+     *
+     * [SyncConstants.RECENT_BACKFILL_DAYS]를 하한으로 두어, 방금 확인했더라도 최근 며칠은
+     * 늘 다시 훑는다. [SyncConstants.INITIAL_BACKFILL_DAYS]를 상한으로 두는 이유는
+     * 그보다 과거는 시스템이 어차피 돌려주지 않기 때문이다.
+     */
+    private suspend fun daysToRecheck(): Long {
+        val lastSuccessAtMillis = syncStatusPreferences.lastSuccessfulSyncAtMillis.first()
+            ?: return SyncConstants.INITIAL_BACKFILL_DAYS
+
+        val elapsedDays = Duration.ofMillis(clock.millis() - lastSuccessAtMillis).toDays()
+
+        // 기기 시간을 되돌리면 음수가 된다. 하한이 그것까지 함께 걸러낸다.
+        return (elapsedDays + 1).coerceIn(
+            SyncConstants.RECENT_BACKFILL_DAYS,
+            SyncConstants.INITIAL_BACKFILL_DAYS
+        )
     }
 
     /**

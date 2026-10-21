@@ -3047,3 +3047,88 @@ FileProvider가 여는 범위는 `cacheDir/apk/` 하나다. 사용 기록 DB(`da
 
 허용은 기본적으로 꺼져 있다. 즉 **새로 설치한 모든 사람이 처음 지나는 길**이었다.
 0.4.1은 그 상태로 배포됐고, 그래서 0.4.2를 바로 냈다.
+
+---
+
+# 저장소를 private으로 되돌린다면 — 2026-10-20 조사
+
+배포가 동작하는 지금 구조는 **저장소가 public이라는 전제** 위에 서 있다. 404를 겪고 Public으로
+전환한 것이 그 전제를 만든 사건이다. "private으로 돌려도 되는가"를 조사했고, **바꾸지 않기로
+했다.** 코드는 손대지 않았다.
+
+몇 달 뒤 같은 질문이 다시 나왔을 때 처음부터 조사하지 않도록, 그리고 아래 2번의 막다른 길에
+다시 들어서지 않도록 적는다.
+
+## 지금 주소는 익명 전용이다
+
+`github.com/<owner>/<repo>/releases/download/<tag>/<file>` 은 private에서 **토큰을 붙여도
+404**다. private에서는 파일 이름이 아니라 자산 번호(asset id)로 API를 불러야 한다.
+
+```
+GET https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}
+Accept: application/octet-stream
+Authorization: Bearer <token>
+    ↓ 302
+https://release-assets.githubusercontent.com/...?<서명된 쿼리>
+    ← 이 두 번째 요청에 Authorization을 붙이면 서명과 충돌해 거부된다
+```
+
+구현 비용이 둘 따라온다. `ApkDownloader`가 의존하는 **자동 리다이렉트 추종을 포기**해야 하고
+(`setInstanceFollowRedirects(false)` → `Location` → 헤더 없이 재요청),
+`CheckForUpdateUseCase`의 `TRUSTED_DOWNLOAD_HOST`가 `api.github.com`으로 바뀐다.
+
+## 토큰을 앱에 넣는 길은 막다른 길이다
+
+`BuildConfig`에 넣어도 **dex 안의 평문 문자열**이다. `strings` 한 번, jadx 한 번이면 나온다.
+즉 **APK를 가진 사람이 private 소스를 전부 읽을 수 있다.** private으로 만든 목적 자체가
+사라진다.
+
+* CLAUDE.md의 `Access Token을 소스에 직접 기록하지 않는다`에 정면으로 걸린다
+* PAT는 만료된다 → 만료되는 순간 **이미 설치된 모든 APK의 업데이트 기능이 동시에 죽는다**
+* Firebase RTDB에 토큰을 두는 변형도 같다. `latest`는 이미 `.read: true`라 더 나쁘다.
+  규칙을 인증 필요로 바꾸면 Firebase Auth → SDK → **SDK 0개로 지켜 온 설계가 무너진다**
+
+이 길은 **어떤 조건에서도 되살리지 않는다.**
+
+## 쓸 수 있는 유일한 길 — 배포 전용 공개 저장소
+
+소스는 private, APK만 공개 저장소(예: `TracePhone-dist`, README 하나 + Release 자산만).
+
+```
+TracePhone      (private)  소스 · Actions가 빌드
+      │  gh release create --repo <owner>/TracePhone-dist
+      ↓
+TracePhone-dist (public)   Release 자산만
+      ↓  익명 다운로드 — 앱은 그대로
+```
+
+**앱 코드는 한 줄도 바뀌지 않는다.** `TRUSTED_DOWNLOAD_HOST`가 `github.com`이고
+`isTrustedDownloadUrl`은 호스트만 보기 때문에, `downloadUrl`이 다른 저장소를 가리켜도
+그대로 통과한다. `distribute.yml`의 `gh release create` 단계 하나만 `--repo`를 받는다.
+
+단, `GITHUB_TOKEN`은 **자기 저장소에만** 권한이 있다. 다른 저장소에 Release를 만들려면
+fine-grained PAT(dist 저장소 `Contents: write` 하나)을 Actions 시크릿에 넣어야 한다.
+**이 토큰은 APK에 들어가지 않는다** — 러너 안에서만 산다. 2번과 결정적으로 다른 점이다.
+
+남는 대가: PAT 만료를 관리해야 한다. 그리고 **APK 자체는 여전히 아무나 받을 수 있다.**
+숨겨지는 것은 소스뿐이다.
+
+## private으로 가면 함께 치르는 비용
+
+| | public (현재) | private (Free 플랜) |
+|---|---|---|
+| Actions 분 | 무제한 | **월 2,000분** |
+| Pages | 가능 | 불가 (Pro 필요) |
+| Release 익명 다운로드 | 가능 | 불가 |
+
+`build.yml`이 **푸시마다** 단위 테스트와 lint를 돌린다. 안드로이드 빌드가 한 번에 5~10분이라
+2,000분은 생각보다 빨리 찬다. 다 쓰면 **배포 워크플로까지 함께 멈춘다.** 즉 private 전환은
+다운로드 경로만 바꾸는 일이 아니라 **푸시 습관까지 바꾸는 일**이다.
+
+## 되살릴 조건
+
+| 하고 싶은 것 | 가는 길 |
+|---|---|
+| 소스를 숨기고 싶다 | 배포 전용 공개 저장소(위 3번) |
+| APK까지 숨기고 싶다 | 앱의 '내려받아 설치'를 포기하고 `adb install -r`로만 넣는다 |
+| 둘 다 | 중계 서버가 필요하다. Google Cloud 접근이 어려운 지금은 길이 없다 |

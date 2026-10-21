@@ -2,6 +2,7 @@ package com.dksystems.tracephone.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dksystems.tracephone.core.coroutineFailureLogger
 import com.dksystems.tracephone.di.ApplicationScope
 import com.dksystems.tracephone.domain.appearance.ThemeModeApplier
 import com.dksystems.tracephone.domain.model.AppListLayout
@@ -105,7 +106,9 @@ class SettingsViewModel @Inject constructor(
      * 다른 설정과 달리 뒤따르는 일이 없어(판정도 위젯 갱신도 없다) `viewModelScope`면 충분하다.
      */
     fun selectAppListLayout(layout: AppListLayout) {
-        viewModelScope.launch { usageViewPreferences.setAppListLayout(layout) }
+        viewModelScope.launch(coroutineFailureLogger) {
+            usageViewPreferences.setAppListLayout(layout)
+        }
     }
 
     fun selectWidgetTextColor(textColor: WidgetTextColor) {

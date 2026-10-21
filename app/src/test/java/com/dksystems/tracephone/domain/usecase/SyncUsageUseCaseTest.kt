@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 
@@ -23,6 +24,10 @@ class SyncUsageUseCaseTest {
         syncStatus: FakeSyncStatusPreferences = FakeSyncStatusPreferences()
     ) = SyncUsageUseCase(repository, synchronizer, syncStatus, clock)
 
+    /** 며칠 전에 확인에 성공한 상태. 음수를 넣으면 기기 시간이 되돌아간 상태가 된다. */
+    private fun checkedDaysAgo(days: Long) =
+        FakeSyncStatusPreferences(now.minus(Duration.ofDays(days)).toEpochMilli())
+
     @Test
     fun `저장된 기록이 없으면 긴 백필을 수행한다`() = runTest {
         val repository = FakeUsageRepository(hasStoredUsage = false)
@@ -34,11 +39,63 @@ class SyncUsageUseCaseTest {
     }
 
     @Test
-    fun `기록이 있으면 최근 며칠만 다시 훑는다`() = runTest {
+    fun `방금 확인했으면 최근 며칠만 다시 훑는다`() = runTest {
         val repository = FakeUsageRepository(hasStoredUsage = true)
         val synchronizer = FakeUsageSynchronizer()
 
-        useCase(repository, synchronizer).invoke()
+        useCase(repository, synchronizer, checkedDaysAgo(0)).invoke()
+
+        assertEquals(SyncConstants.RECENT_BACKFILL_DAYS, synchronizer.lastRequestedSyncDayCount)
+    }
+
+    /**
+     * **이 앱이 기록을 잃는 유일한 경로였다.** 저장된 기록이 있으면 긴 백필 조건이 다시
+     * 성립하지 않으므로, 고정 일수를 쓰면 그보다 오래 멈춰 있던 기간을 아무도 읽지 않는다.
+     * 앱을 강제 종료해 두거나 폰을 오래 꺼 두면 그 사이가 영구히 빈다.
+     */
+    @Test
+    fun `멈춰 있던 기간만큼 거슬러 올라간다`() = runTest {
+        val repository = FakeUsageRepository(hasStoredUsage = true)
+        val synchronizer = FakeUsageSynchronizer()
+
+        useCase(repository, synchronizer, checkedDaysAgo(20)).invoke()
+
+        // 확인한 그 날 자체도 다시 읽어야 한다. 확인은 그 날 한가운데에 있었다.
+        assertEquals(21L, synchronizer.lastRequestedSyncDayCount)
+    }
+
+    /**
+     * 공백의 크기를 모르는 채 짧게 훑으면 조용히 잃는다. 길게 훑으면 시스템이 보관하지 않는
+     * 날짜를 몇 번 헛도는 정도가 전부다.
+     */
+    @Test
+    fun `확인 기록이 없으면 길게 훑는다`() = runTest {
+        val repository = FakeUsageRepository(hasStoredUsage = true, hasStateRecordedUsage = true)
+        val synchronizer = FakeUsageSynchronizer()
+
+        useCase(repository, synchronizer, FakeSyncStatusPreferences()).invoke()
+
+        assertEquals(SyncConstants.INITIAL_BACKFILL_DAYS, synchronizer.lastRequestedSyncDayCount)
+    }
+
+    /** 그보다 과거는 시스템이 어차피 돌려주지 않는다. */
+    @Test
+    fun `아무리 오래 멈춰 있어도 상한을 넘지 않는다`() = runTest {
+        val repository = FakeUsageRepository(hasStoredUsage = true)
+        val synchronizer = FakeUsageSynchronizer()
+
+        useCase(repository, synchronizer, checkedDaysAgo(400)).invoke()
+
+        assertEquals(SyncConstants.INITIAL_BACKFILL_DAYS, synchronizer.lastRequestedSyncDayCount)
+    }
+
+    /** 기기 시간을 되돌리면 저장된 시각이 미래가 된다. 음수 일수로 조회하면 안 된다. */
+    @Test
+    fun `기기 시간이 되돌아가도 하한을 지킨다`() = runTest {
+        val repository = FakeUsageRepository(hasStoredUsage = true)
+        val synchronizer = FakeUsageSynchronizer()
+
+        useCase(repository, synchronizer, checkedDaysAgo(-30)).invoke()
 
         assertEquals(SyncConstants.RECENT_BACKFILL_DAYS, synchronizer.lastRequestedSyncDayCount)
     }
@@ -59,7 +116,7 @@ class SyncUsageUseCaseTest {
         val repository = FakeUsageRepository(hasStoredUsage = true, hasStateRecordedUsage = true)
         val synchronizer = FakeUsageSynchronizer()
 
-        useCase(repository, synchronizer).invoke()
+        useCase(repository, synchronizer, checkedDaysAgo(0)).invoke()
 
         assertEquals(SyncConstants.RECENT_BACKFILL_DAYS, synchronizer.lastRequestedSyncDayCount)
     }

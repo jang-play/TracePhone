@@ -18,6 +18,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * 받은 APK를 둘 파일 이름.
+ *
+ * **버전을 이름에 넣지 않는다.** 넣으려면 기록의 `versionName`을 써야 하는데, 그 값은
+ * Firebase 콘솔에서 **사람이 손으로 적은** 글자다. 슬래시나 `..`이 섞이면 그대로 파일 경로가
+ * 되어 엉뚱한 자리를 가리킨다. `2026/10/21`처럼 적은 오타 하나가 "원인을 알 수 없는 네트워크
+ * 오류"로 둔갑해 사용자가 영원히 다시 누르게 된다.
+ *
+ * 이름으로 구별할 이유도 없다. `ApkDownloader`가 받기 전에 캐시 폴더를 비우므로
+ * 그 안에는 언제나 이 파일 하나뿐이다.
+ */
+private const val DOWNLOADED_APK_FILE_NAME = "update.apk"
+
+/**
  * 새 버전을 받아 설치 화면까지 데려간다.
  *
  * ### [AppUpdateChecker]와 합치지 않는다
@@ -56,14 +69,24 @@ class AppUpdateDownloader @Inject constructor(
         applicationScope.launch { runDownload(release) }
     }
 
-    /** 허용 화면을 연다. 돌아온 뒤 사용자가 다시 누르면 [downloadAndInstall]이 통과한다. */
-    fun openInstallPermissionSettings() = apkInstaller.openInstallPermissionSettings()
+    /**
+     * 허용 화면을 연다. 돌아온 뒤 사용자가 다시 누르면 [downloadAndInstall]이 통과한다.
+     *
+     * **열면서 상태를 거둔다.** 허용 여부는 앱 밖에서 바뀌는데 [ApkDownload.InstallPermissionRequired]는
+     * 앱 수명 동안 남는다. 그대로 두면 사용자가 허용을 켜고 돌아와도 "허용이 필요합니다"가
+     * 화면에 남아 이미 해결한 일을 안 했다고 적는다. 거두면 받기 버튼만 남고, 아직 허용되지
+     * 않았다면 누르는 순간 [downloadAndInstall]이 다시 같은 상태로 되돌린다.
+     */
+    fun openInstallPermissionSettings() {
+        mutableDownload.value = ApkDownload.Idle
+        apkInstaller.openInstallPermissionSettings()
+    }
 
     private suspend fun runDownload(release: AppRelease) {
         mutableDownload.value = try {
             val apk = apkDownloader.download(
                 url = release.downloadUrl,
-                fileName = "TracePhone-${release.versionName}.apk",
+                fileName = DOWNLOADED_APK_FILE_NAME,
                 onProgress = { downloaded, total ->
                     mutableDownload.value = ApkDownload.Downloading(downloaded, total)
                 }

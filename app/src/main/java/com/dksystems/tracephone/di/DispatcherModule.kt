@@ -1,5 +1,6 @@
 package com.dksystems.tracephone.di
 
+import com.dksystems.tracephone.core.coroutineFailureLogger
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -44,11 +45,14 @@ object DispatcherModule {
      * `SupervisorJob`을 쓴다. 한 작업이 실패해도 나머지 작업까지 함께 죽으면 안 된다.
      *
      * 애플리케이션과 수명을 같이하므로 따로 취소하지 않는다.
+     *
+     * **처리기를 반드시 함께 건다.** `SupervisorJob`만으로는 잡히지 않은 예외가 안드로이드의
+     * 기본 처리기까지 올라가 프로세스를 죽인다. 이유는 [coroutineFailureLogger]에 있다.
      */
     @Provides
     @Singleton
     @ApplicationScope
     fun provideApplicationScope(
         @IoDispatcher ioDispatcher: CoroutineDispatcher
-    ): CoroutineScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+    ): CoroutineScope = CoroutineScope(SupervisorJob() + ioDispatcher + coroutineFailureLogger)
 }
