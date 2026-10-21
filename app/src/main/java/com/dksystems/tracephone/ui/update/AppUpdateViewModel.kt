@@ -61,8 +61,8 @@ class AppUpdateViewModel @Inject constructor(
         initialValue = null
     )
 
-    /** 앱을 켠 뒤 처음 보이는 화면에서 부른다. 실행당 한 번만 실제로 확인한다. */
-    fun checkOnce() = appUpdateChecker.checkOnce()
+    /** 앱이 앞으로 올 때 부른다. 확인한 지 오래됐을 때만 실제로 묻는다. */
+    fun checkIfStale() = appUpdateChecker.checkIfStale()
 
     fun recheck() = appUpdateChecker.recheck()
 

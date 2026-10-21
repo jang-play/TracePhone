@@ -10,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -46,8 +45,6 @@ internal fun AppUpdateCard(
 
     val updateCheck by viewModel.updateCheck.collectAsStateWithLifecycle()
     val download by viewModel.download.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) { viewModel.checkOnce() }
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(

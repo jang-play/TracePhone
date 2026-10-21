@@ -21,6 +21,7 @@ import com.dksystems.tracephone.ui.navigation.TracePhoneDestinations
 import com.dksystems.tracephone.ui.permission.PermissionScreen
 import com.dksystems.tracephone.ui.permission.PermissionViewModel
 import com.dksystems.tracephone.ui.settings.SettingsScreen
+import com.dksystems.tracephone.ui.update.AppUpdateViewModel
 import com.dksystems.tracephone.ui.summary.UsageSummaryScreen
 
 /**
@@ -33,15 +34,24 @@ import com.dksystems.tracephone.ui.summary.UsageSummaryScreen
 @Composable
 fun TracePhoneApp(
     modifier: Modifier = Modifier,
-    permissionViewModel: PermissionViewModel = hiltViewModel()
+    permissionViewModel: PermissionViewModel = hiltViewModel(),
+    appUpdateViewModel: AppUpdateViewModel = hiltViewModel()
 ) {
     val isPermissionGranted by permissionViewModel.isGranted.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    // 앱 밖에서 바뀌는 것들을 앱이 앞으로 올 때마다 다시 읽는다.
+    // 사용 정보 권한은 시스템 설정에서, 새 버전 기록은 서버에서 바뀌고, 둘 다 바뀐 것을
+    // 알려 주지 않는다. 관찰자를 붙이는 순간 현재 상태가 다시 전달되므로 첫 실행도 덮는다.
+    //
+    // **화면이 아니라 여기서 묻는다.** 화면마다 걸면 어느 화면을 거쳤는지에 따라 확인
+    // 여부가 갈리고, 화면이 처음 만들어질 때만 발사되는 효과로는 따뜻한 프로세스에서
+    // 영원히 다시 묻지 않는다.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 permissionViewModel.refresh()
+                appUpdateViewModel.checkIfStale()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

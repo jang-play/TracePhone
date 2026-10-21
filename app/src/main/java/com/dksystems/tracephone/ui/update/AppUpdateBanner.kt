@@ -10,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,9 +31,11 @@ import com.dksystems.tracephone.domain.model.ApkDownload
  * 저장소가 하나 더 생기고, 업데이트 안내는 한 번 닫았다고 영구히 사라져야 하는 종류가
  * 아니기 때문이다.
  *
- * ### 확인을 여기서 시작한다
- * 앱을 켜면 가장 먼저 보이는 화면이라 "시작할 때 확인"의 자리가 된다.
- * [AppUpdateViewModel.checkOnce]가 실행당 한 번만 실제로 묻는다.
+ * ### 확인을 여기서 시작하지 않는다
+ * 묻는 일은 [com.dksystems.tracephone.ui.TracePhoneApp]이 앱이 앞으로 올 때마다 한다.
+ * 예전에는 이 화면이 처음 만들어질 때 물었는데, 그 효과는 **한 번만 발사되고**
+ * 안드로이드는 프로세스를 잘 죽이지 않아 홈을 누르고 돌아온 사용자가 영원히 같은 답을
+ * 보게 됐다. 이 배너는 이제 결과를 보여주는 일만 한다.
  */
 @Composable
 internal fun AppUpdateBanner(
@@ -42,8 +43,6 @@ internal fun AppUpdateBanner(
     viewModel: AppUpdateViewModel = hiltViewModel()
 ) {
     if (!viewModel.isSupported) return
-
-    LaunchedEffect(Unit) { viewModel.checkOnce() }
 
     val release by viewModel.pendingRelease.collectAsStateWithLifecycle()
     val download by viewModel.download.collectAsStateWithLifecycle()
