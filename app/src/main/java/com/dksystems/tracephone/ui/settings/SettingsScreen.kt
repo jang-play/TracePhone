@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dksystems.tracephone.R
+import com.dksystems.tracephone.ui.backup.UsageBackupCard
 
 /**
  * 설정 화면.
@@ -117,6 +118,8 @@ fun SettingsScreen(
 
                 BackgroundRestrictionNotice()
             }
+
+            UsageBackupCard()
 
             AppUpdateCard()
         }

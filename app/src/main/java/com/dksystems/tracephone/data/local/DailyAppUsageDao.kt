@@ -35,6 +35,18 @@ interface DailyAppUsageDao {
     suspend fun hasAnyRecord(): Boolean
 
     /**
+     * 모든 행을 그대로 돌려준다. 백업 파일로 내보낼 때만 쓴다.
+     *
+     * 이 DAO의 다른 조회와 달리 **집계하지 않는다.** 백업은 복원할 수 있어야 하므로
+     * 저장된 모양 그대로여야 한다.
+     *
+     * 한 번에 메모리로 올린다. 실측 18,000행이 수 MB 수준이고, 내보내기는 사용자가
+     * 누를 때만 일어나는 일회성 작업이라 흘려보내는 구조를 만들 만한 이득이 없다.
+     */
+    @Query("SELECT * FROM daily_app_usage ORDER BY usageDate, uid, networkKind")
+    suspend fun readAllForBackup(): List<DailyAppUsageEntity>
+
+    /**
      * 포그라운드 구분이 기록된 행이 하나라도 있는지 확인한다.
      *
      * 이 구분을 도입하기 전에 쌓인 기록만 있는 기기를 알아내, 시스템이 아직 보관 중인 기간을

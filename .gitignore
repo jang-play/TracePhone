@@ -12,7 +12,10 @@ captures/
 *.keystore
 
 # 실기기에서 뽑은 실제 사용 기록 DB. 개인 데이터이므로 저장소에 넣지 않는다.
-backup/
+#
+# 선행 /가 반드시 있어야 한다. 없으면 **모든 깊이의 backup 폴더**가 걸러져
+# data/backup, ui/backup 같은 소스 폴더가 조용히 커밋에서 빠진다. 실제로 겪었다.
+/backup/
 
 # release 서명 키의 위치와 비밀번호.
 keystore.properties
