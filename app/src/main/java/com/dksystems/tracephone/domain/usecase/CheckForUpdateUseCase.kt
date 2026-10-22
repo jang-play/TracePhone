@@ -58,7 +58,7 @@ class CheckForUpdateUseCase @Inject constructor(
 
     private fun verdictFor(release: AppRelease): UpdateCheck = when {
         release.versionCode <= installedAppVersion.versionCode ->
-            UpdateCheck.UpToDate(installedAppVersion.versionName)
+            UpdateCheck.UpToDate(installedAppVersion.versionName, release)
 
         !isTrustedDownloadUrl(release.downloadUrl) ->
             UpdateCheck.Failed(UpdateCheckFailure.UNTRUSTED_DOWNLOAD_URL)

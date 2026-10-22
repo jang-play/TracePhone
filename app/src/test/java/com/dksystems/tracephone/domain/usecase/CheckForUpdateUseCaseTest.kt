@@ -49,22 +49,43 @@ class CheckForUpdateUseCaseTest {
 
     @Test
     fun `버전이 같으면 최신이다`() = runTest {
+        val latest = releaseOf(versionCode = 5)
         val useCase = CheckForUpdateUseCase(
-            FakeLatestReleaseSource(release = releaseOf(versionCode = 5)),
+            FakeLatestReleaseSource(release = latest),
             FakeInstalledAppVersion(versionCode = 5, versionName = "0.5.0")
         )
 
-        assertEquals(UpdateCheck.UpToDate("0.5.0"), useCase())
+        assertEquals(UpdateCheck.UpToDate("0.5.0", latest), useCase())
+    }
+
+    /**
+     * 최신이어도 기록의 주소를 버리지 않는다.
+     *
+     * 설정 화면의 '링크 복사'와 '브라우저로 열기'가 여기에 기댄다. 버리면 최신인 상태에서
+     * 링크를 꺼낼 방법이 아예 없어진다 — 실제로 그래서 버튼이 안 보였다.
+     */
+    @Test
+    fun `최신일 때도 내려받기 주소를 들고 있다`() = runTest {
+        val latest = releaseOf(versionCode = 5)
+        val useCase = CheckForUpdateUseCase(
+            FakeLatestReleaseSource(release = latest),
+            FakeInstalledAppVersion(versionCode = 5, versionName = "0.5.0")
+        )
+
+        val result = useCase()
+
+        assertEquals(latest.downloadUrl, (result as UpdateCheck.UpToDate).release.downloadUrl)
     }
 
     @Test
     fun `직접 빌드해 더 높은 버전을 쓰고 있으면 내려가라고 하지 않는다`() = runTest {
+        val latest = releaseOf(versionCode = 2)
         val useCase = CheckForUpdateUseCase(
-            FakeLatestReleaseSource(release = releaseOf(versionCode = 2)),
+            FakeLatestReleaseSource(release = latest),
             FakeInstalledAppVersion(versionCode = 9, versionName = "0.9.0")
         )
 
-        assertEquals(UpdateCheck.UpToDate("0.9.0"), useCase())
+        assertEquals(UpdateCheck.UpToDate("0.9.0", latest), useCase())
     }
 
     @Test
@@ -136,13 +157,12 @@ class CheckForUpdateUseCaseTest {
     @Test
     fun `최신인 경우에는 주소를 검사하지 않는다`() = runTest {
         // 내려받을 일이 없으므로 주소가 어떻든 "최신"이라고 말하는 것이 맞다.
+        val latest = releaseOf(versionCode = 1, downloadUrl = "https://evil.example")
         val useCase = CheckForUpdateUseCase(
-            FakeLatestReleaseSource(
-                release = releaseOf(versionCode = 1, downloadUrl = "https://evil.example")
-            ),
+            FakeLatestReleaseSource(release = latest),
             FakeInstalledAppVersion(versionCode = 1, versionName = "0.1.0")
         )
 
-        assertEquals(UpdateCheck.UpToDate("0.1.0"), useCase())
+        assertEquals(UpdateCheck.UpToDate("0.1.0", latest), useCase())
     }
 }

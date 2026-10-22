@@ -37,7 +37,17 @@ sealed interface UpdateCheck {
     data object Checking : UpdateCheck
 
     /** 설치된 것이 최신이거나 더 새롭다. */
-    data class UpToDate(val installedVersionName: String) : UpdateCheck
+    /**
+     * 더 새 버전이 없다.
+     *
+     * **기록된 내용을 함께 들고 있는다.** 받을 것이 없어도 주소는 쓸모가 있다 — 남에게
+     * 보내거나 다른 기기에서 받을 때다. 버리면 "최신입니다"일 때 링크를 복사할 방법이
+     * 없어진다(실제로 그랬다).
+     */
+    data class UpToDate(
+        val installedVersionName: String,
+        val release: AppRelease
+    ) : UpdateCheck
 
     /** 더 새 버전이 있다. */
     data class Available(val release: AppRelease) : UpdateCheck

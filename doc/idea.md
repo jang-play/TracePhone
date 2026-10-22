@@ -3298,3 +3298,59 @@ DB         18,293행 integrity ok — 전 과정에서 보존
 
 폰에 debug `versionCode 10`을 올려 시험하면, 같은 번호로 배포한 release를 **배너가 권하지
 않는다**(10 == 10). 다음부터 "배너가 안 뜬다"를 볼 때 Firebase 값 다음으로 확인할 것이다.
+
+---
+
+# 0.5.2 — 링크 복사가 보이지 않던 이유
+
+0.5.1에서 `링크 복사`를 넣었는데 사용자가 "없는데?"라고 했다. 맞았다.
+
+```kotlin
+val available = (updateCheck as? UpdateCheck.Available)?.release
+if (available != null) { ... 브라우저로 열기 / 링크 복사 ... }
+```
+
+**버튼을 '새 버전이 있을 때'로 묶어 두었다.** 폰 10, Firebase 9 → `UpToDate` →
+둘째 줄이 통째로 안 그려졌다. `브라우저로 열기`도 함께 없었다(그것은 처음부터 그랬다).
+
+더 나쁜 것은, 나는 0.5.1을 내면서 이 제약을 **알고 적어 두고도** "필요하면 알려 주세요"로
+미뤘고, 그러고도 바로 다음 안내에서 "설정 → 앱 버전 → 링크 복사로 받으세요"라고 했다.
+**존재하지 않는 버튼을 쓰라고 안내한 것이다.** 제약을 아는 것과 그 제약이 사용자의 다음
+행동을 막는지 보는 것은 다른 일이다.
+
+## 고침 — `UpToDate`가 기록을 버리고 있었다
+
+```kotlin
+data class UpToDate(val installedVersionName: String, val release: AppRelease)
+```
+
+받을 것이 없어도 **주소는 쓸모가 있다** — 남에게 보내거나 다른 기기에서 받을 때다.
+버튼은 '새 버전 여부'가 아니라 **'주소를 아는가'** 에 묶였다.
+
+```kotlin
+private val UpdateCheck.knownDownloadUrl: String?
+    get() = when (this) {
+        is UpdateCheck.Available -> release.downloadUrl
+        is UpdateCheck.UpToDate  -> release.downloadUrl
+        UpdateCheck.Unavailable, UpdateCheck.NotChecked, UpdateCheck.Checking -> null
+        is UpdateCheck.Failed -> null
+    }
+```
+
+`when`을 빠짐없이 둬서 상태가 늘면 컴파일이 알려 준다. '최신일 때도 주소를 들고 있다'를
+테스트로 고정했다 — 다시 버리면 깨진다.
+
+## 폰을 PC에 연결하지 않기로 했다 (2026-10-22)
+
+연결이 이 세션에서 세 번 끊겨 작업이 중단됐고, 사용자가 아예 연결하지 않기로 정했다.
+따라오는 결과가 둘이다.
+
+**① 백업은 앱의 `기록 백업`이 유일한 수단이다.** `run-as`는 완전히 닫혔다. 다섯 번 미뤘던
+그 기능이 없었다면 지금 누적 기록을 꺼낼 방법이 아예 없었을 것이다 — 미루던 것을
+정책이 바뀌는 순간 만들어 둔 것이 운이 좋았다.
+
+**② 배포 전 실기기 검증이 불가능하다.** 손으로 눌러 보는 확인은 배포 **뒤에** 사용자가
+하는 일이 된다. 배포 시점에 아는 것은 단위 테스트와 lint가 통과했다는 것까지다.
+그래서 **JVM에서 테스트할 수 있게 만드는 것의 값이 올라갔다** — `AppUpdateChecker`를
+`Context`에서 떼어 놓은 것, CSV 파싱을 순수 함수로 뽑은 것이 그런 종류의 투자다.
+앞으로 UI에만 사는 판단을 늘리면 그만큼 아무도 검증하지 않는 영역이 늘어난다.

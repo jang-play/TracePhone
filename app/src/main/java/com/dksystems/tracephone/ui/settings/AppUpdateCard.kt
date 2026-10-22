@@ -126,6 +126,7 @@ private fun UpdateActions(
     // 클립보드 이력을 보여주는 기기에서 무엇을 복사했는지 알아볼 수 있게 이름을 붙인다.
     val appName = stringResource(R.string.app_name)
     val available = (updateCheck as? UpdateCheck.Available)?.release
+    val downloadUrl = updateCheck.knownDownloadUrl
 
     Column {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -144,7 +145,10 @@ private fun UpdateActions(
             }
         }
 
-        if (available != null) {
+        // **새 버전이 있을 때로 묶지 않는다.** 주소는 최신일 때도 쓸모가 있다 — 남에게
+        // 보내거나 다른 기기에서 받을 때다. 예전에는 Available에만 그려서, 최신인 상태에서는
+        // 링크를 복사할 방법이 아예 없었다.
+        if (downloadUrl != null) {
             // 버튼이 셋까지 생기고(허용 화면·브라우저·링크 복사) 글씨를 크게 쓰는 설정에서는
             // 한 줄에 들어가지 않는다. Row는 넘치면 잘라내므로 줄바꿈하는 쪽을 쓴다.
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -154,18 +158,17 @@ private fun UpdateActions(
                     )
                 }
 
-                TextButton(onClick = { uriHandler.openUri(available.downloadUrl) }) {
+                TextButton(onClick = { uriHandler.openUri(downloadUrl) }) {
                     Text(stringResource(R.string.update_action_open_in_browser))
                 }
 
-                // 다른 사람에게 보내거나 다른 기기에서 받을 때 쓴다. 안드로이드 13부터는
-                // 복사했다는 안내를 시스템이 스스로 띄우므로 앱이 따로 알리지 않는다.
+                // 안드로이드 13부터는 복사했다는 안내를 시스템이 스스로 띄우므로
+                // 앱이 따로 알리지 않는다.
                 TextButton(
                     onClick = {
                         clipboardScope.launch(coroutineFailureLogger) {
                             clipboard.setClipEntry(
-                                ClipData.newPlainText(appName, available.downloadUrl)
-                                    .toClipEntry()
+                                ClipData.newPlainText(appName, downloadUrl).toClipEntry()
                             )
                         }
                     }
@@ -176,6 +179,19 @@ private fun UpdateActions(
         }
     }
 }
+
+/**
+ * 확인이 성공했다면 기록이 알려준 내려받기 주소. 새 버전이든 최신이든 같은 주소다.
+ *
+ * `when`을 빠짐없이 두어 상태가 늘어날 때 컴파일이 알려 주게 한다.
+ */
+private val UpdateCheck.knownDownloadUrl: String?
+    get() = when (this) {
+        is UpdateCheck.Available -> release.downloadUrl
+        is UpdateCheck.UpToDate -> release.downloadUrl
+        UpdateCheck.Unavailable, UpdateCheck.NotChecked, UpdateCheck.Checking -> null
+        is UpdateCheck.Failed -> null
+    }
 
 private fun recheckLabelOf(updateCheck: UpdateCheck): Int =
     if (updateCheck is UpdateCheck.NotChecked) {
