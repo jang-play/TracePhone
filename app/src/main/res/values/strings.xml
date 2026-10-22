@@ -215,6 +215,8 @@
     <string name="app_label_system">시스템 (uid %1$d)</string>
     <string name="app_label_unknown">알 수 없는 앱 (uid %1$d)</string>
 
+    <string name="update_action_copy_link">링크 복사</string>
+
     <string name="settings_backup_title">기록 백업</string>
     <string name="settings_backup_description">누적된 사용 기록을 파일로 꺼내 두면 폰을 바꾸거나 앱을 다시 설치해도 이어갈 수 있습니다. 가져오기는 기존 기록을 지우지 않고 합칩니다.</string>
     <string name="settings_backup_action_export">파일로 내보내기</string>
@@ -243,6 +245,7 @@
 
     <string name="summary_update_banner_available">새 버전 %1$s 이 나왔습니다.</string>
     <string name="summary_update_banner_dismiss">닫기</string>
+    <string name="summary_update_banner_failed">새 버전이 있는지 확인하지 못했습니다.</string>
 
     <string name="update_action_download_and_install">내려받아 설치</string>
     <string name="update_action_open_in_browser">브라우저로 열기</string>

@@ -18,24 +18,27 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dksystems.tracephone.R
 import com.dksystems.tracephone.domain.model.ApkDownload
+import com.dksystems.tracephone.domain.model.AppRelease
+import com.dksystems.tracephone.domain.model.UpdateCheck
 
 /**
- * 새 버전이 나왔을 때만 요약 화면 맨 위에 나타나는 줄.
+ * 업데이트에 관해 **요약 화면에서 말할 것이 있을 때만** 나타나는 줄.
  *
  * ### 색을 쓰지 않는다
  * 새 버전은 **문제가 아니라 사실**이다. 이 앱은 색을 한도 초과처럼 사용자가 조치해야 하는
  * 일에만 쓰므로, 여기서는 보통 카드와 같은 바탕을 쓴다.
  *
- * ### 닫으면 이번 실행 동안만 사라진다
- * 다음에 앱을 켜면 다시 알린다. 저장하지 않는 이유는 '어느 버전까지 닫았나'를 관리할
- * 저장소가 하나 더 생기고, 업데이트 안내는 한 번 닫았다고 영구히 사라져야 하는 종류가
- * 아니기 때문이다.
+ * ### 확인하지 못한 것도 알린다
+ * 예전에는 새 버전이 있을 때만 나타났다. 그래서 **"새 버전 없음"과 "확인 실패"가 요약
+ * 화면에서 똑같이 아무것도 안 보였다.** 실기기에서 네트워크를 끊고 확인해 보니 화면에
+ * 흔적이 한 줄도 없었다. 잘 되고 있을 때와 실패했을 때가 구별되지 않으면 사용자는
+ * 기능이 고장 났다고 여긴다. 그래서 실패만 따로 알린다 —
+ * '최신입니다'는 알리지 않는다. 그것은 아무 일도 하지 않아도 되는 상태이고,
+ * 앱을 열 때마다 줄을 하나 더 그리는 값을 치를 이유가 없다.
  *
  * ### 확인을 여기서 시작하지 않는다
  * 묻는 일은 [com.dksystems.tracephone.ui.TracePhoneApp]이 앱이 앞으로 올 때마다 한다.
- * 예전에는 이 화면이 처음 만들어질 때 물었는데, 그 효과는 **한 번만 발사되고**
- * 안드로이드는 프로세스를 잘 죽이지 않아 홈을 누르고 돌아온 사용자가 영원히 같은 답을
- * 보게 됐다. 이 배너는 이제 결과를 보여주는 일만 한다.
+ * 이 배너는 결과를 보여주는 일만 한다.
  */
 @Composable
 internal fun AppUpdateBanner(
@@ -45,11 +48,31 @@ internal fun AppUpdateBanner(
     if (!viewModel.isSupported) return
 
     val release by viewModel.pendingRelease.collectAsStateWithLifecycle()
+    val updateCheck by viewModel.updateCheck.collectAsStateWithLifecycle()
     val download by viewModel.download.collectAsStateWithLifecycle()
 
-    val pending = release ?: return
-    val statusText = updateDownloadText(download)
+    val pending = release
+    when {
+        pending != null -> AvailableBanner(pending, download, viewModel, modifier)
 
+        updateCheck is UpdateCheck.Failed ->
+            CheckFailedBanner(onRecheck = viewModel::recheck, modifier = modifier)
+    }
+}
+
+/**
+ * 새 버전이 나왔다.
+ *
+ * `닫기`는 다음 확인까지만 감춘다. 영구히 숨기면 "앱을 열 때 알려준다"가 거짓이 된다 —
+ * 그 이유는 [com.dksystems.tracephone.data.update.AppUpdateChecker.dismissedVersionCode]에 있다.
+ */
+@Composable
+private fun AvailableBanner(
+    release: AppRelease,
+    download: ApkDownload,
+    viewModel: AppUpdateViewModel,
+    modifier: Modifier = Modifier
+) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
@@ -58,12 +81,12 @@ internal fun AppUpdateBanner(
             Text(
                 text = stringResource(
                     R.string.summary_update_banner_available,
-                    pending.versionName
+                    release.versionName
                 ),
                 style = MaterialTheme.typography.bodyLarge
             )
 
-            statusText?.let { status ->
+            updateDownloadText(download)?.let { status ->
                 Text(
                     text = status,
                     style = MaterialTheme.typography.bodySmall,
@@ -74,7 +97,7 @@ internal fun AppUpdateBanner(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 UpdateDownloadButton(
                     download = download,
-                    onDownload = { viewModel.downloadAndInstall(pending) }
+                    onDownload = { viewModel.downloadAndInstall(release) }
                 )
 
                 if (download is ApkDownload.InstallPermissionRequired) {
@@ -83,9 +106,35 @@ internal fun AppUpdateBanner(
                     )
                 }
 
-                TextButton(onClick = { viewModel.dismiss(pending.versionCode) }) {
+                TextButton(onClick = { viewModel.dismiss(release.versionCode) }) {
                     Text(stringResource(R.string.summary_update_banner_dismiss))
                 }
+            }
+        }
+    }
+}
+
+/**
+ * 확인 자체가 되지 않았다.
+ *
+ * **닫기를 두지 않는다.** 닫을 수 있으면 "확인하지 못한 상태"를 숨긴 채로 앱을 쓰게 되고,
+ * 그것은 예전의 침묵과 같아진다. 다음 확인이 성공하면 스스로 사라지고, 실패한 뒤에는
+ * 간격이 짧아져 금방 다시 시도한다.
+ */
+@Composable
+private fun CheckFailedBanner(onRecheck: () -> Unit, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.summary_update_banner_failed),
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            TextButton(onClick = onRecheck) {
+                Text(stringResource(R.string.settings_update_action_recheck))
             }
         }
     }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.Clock
 import java.time.Duration
@@ -106,6 +107,99 @@ class AppUpdateCheckerTest {
         checker.checkIfStale()
 
         assertEquals(1, source.fetchCount)
+    }
+
+    /**
+     * 뒤로가기로 앱을 닫으면 부른다. 그렇게 닫았다가 다시 여는 것은 사용자에게 '새로 켜는
+     * 일'이므로, 확인이 간격에 막혀 조용히 건너뛰어지면 "열었는데 아무 일도 없다"가 된다.
+     */
+    @Test
+    fun `확인한 기억을 지우면 간격과 무관하게 다시 묻는다`() = runTest {
+        val source = FakeLatestReleaseSource(release = newerRelease)
+        val checker = checkerWith(source, MutableClock(START))
+
+        checker.checkIfStale()
+        checker.forgetLastCheck()
+        checker.checkIfStale()
+
+        assertEquals(2, source.fetchCount)
+    }
+
+    /**
+     * 실패를 성공과 같이 10분 붙들면, 네트워크가 1분 뒤 돌아와도 화면에 실패가 남아
+     * 사용자가 고장으로 읽는다. 실측으로 겪은 뒤 간격을 갈랐다.
+     */
+    @Test
+    fun `실패한 뒤에는 더 짧은 간격으로 다시 묻는다`() = runTest {
+        val source = FakeLatestReleaseSource(error = java.io.IOException("연결 실패"))
+        val clock = MutableClock(START)
+        val checker = checkerWith(source, clock)
+
+        checker.checkIfStale()
+        clock.advance(Duration.ofMinutes(2))
+        checker.checkIfStale()
+
+        // 성공했을 때의 간격(10분)이라면 아직 묻지 않았을 시점이다.
+        assertEquals(2, source.fetchCount)
+    }
+
+    @Test
+    fun `실패한 뒤에도 너무 이르면 묻지 않는다`() = runTest {
+        val source = FakeLatestReleaseSource(error = java.io.IOException("연결 실패"))
+        val clock = MutableClock(START)
+        val checker = checkerWith(source, clock)
+
+        checker.checkIfStale()
+        clock.advance(Duration.ofSeconds(30))
+        checker.checkIfStale()
+
+        assertEquals(1, source.fetchCount)
+    }
+
+    /**
+     * **0.4.4에서 고친 것과 같은 함정이 닫기에도 있었다.**
+     *
+     * 닫은 기억이 프로세스 수명 동안 남으면, 안드로이드가 프로세스를 잘 죽이지 않으므로
+     * 닫기 한 번이 배너를 영구히 숨긴다. '앱을 다시 켜면 다시 알린다'가 거짓이 된다.
+     */
+    @Test
+    fun `닫은 뒤 다시 확인하면 다시 알린다`() = runTest {
+        val source = FakeLatestReleaseSource(release = newerRelease)
+        val clock = MutableClock(START)
+        val checker = checkerWith(source, clock)
+
+        checker.checkIfStale()
+        checker.dismiss(newerRelease.versionCode)
+        clock.advance(Duration.ofMinutes(11))
+        checker.checkIfStale()
+
+        assertNull(checker.dismissedVersionCode.value)
+    }
+
+    /** 닫은 직후에 다시 띄우면 닫은 뜻이 없어진다. 다음 확인까지는 닫혀 있어야 한다. */
+    @Test
+    fun `닫은 직후에는 닫힌 채로 둔다`() = runTest {
+        val source = FakeLatestReleaseSource(release = newerRelease)
+        val checker = checkerWith(source, MutableClock(START))
+
+        checker.checkIfStale()
+        checker.dismiss(newerRelease.versionCode)
+        checker.checkIfStale()
+
+        assertEquals(newerRelease.versionCode, checker.dismissedVersionCode.value)
+    }
+
+    /** 사용자가 직접 '다시 확인'을 눌렀다면 닫아 둔 것도 함께 거둔다. */
+    @Test
+    fun `다시 확인은 닫은 기억도 지운다`() = runTest {
+        val source = FakeLatestReleaseSource(release = newerRelease)
+        val checker = checkerWith(source, MutableClock(START))
+
+        checker.checkIfStale()
+        checker.dismiss(newerRelease.versionCode)
+        checker.recheck()
+
+        assertNull(checker.dismissedVersionCode.value)
     }
 
     /**

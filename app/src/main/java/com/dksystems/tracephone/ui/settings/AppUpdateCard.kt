@@ -2,6 +2,8 @@ package com.dksystems.tracephone.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -9,15 +11,20 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import android.content.ClipData
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dksystems.tracephone.R
+import com.dksystems.tracephone.core.coroutineFailureLogger
 import com.dksystems.tracephone.domain.model.ApkDownload
 import com.dksystems.tracephone.domain.model.AppRelease
 import com.dksystems.tracephone.domain.model.UpdateCheck
@@ -26,6 +33,7 @@ import com.dksystems.tracephone.ui.update.AppUpdateViewModel
 import com.dksystems.tracephone.ui.update.InstallPermissionButton
 import com.dksystems.tracephone.ui.update.UpdateDownloadButton
 import com.dksystems.tracephone.ui.update.updateDownloadText
+import kotlinx.coroutines.launch
 
 /**
  * 설치된 버전과 새 버전 안내.
@@ -104,6 +112,7 @@ internal fun AppUpdateCard(
  * 브라우저 링크는 **대체 경로**다 — 앱 안에서 받는 길이 막히는 기기가 있을 수 있어
  * 손으로 받는 방법을 남겨 둔다.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun UpdateActions(
     updateCheck: UpdateCheck,
@@ -111,6 +120,11 @@ private fun UpdateActions(
     viewModel: AppUpdateViewModel
 ) {
     val uriHandler = LocalUriHandler.current
+    val clipboard = LocalClipboard.current
+    val clipboardScope = rememberCoroutineScope()
+
+    // 클립보드 이력을 보여주는 기기에서 무엇을 복사했는지 알아볼 수 있게 이름을 붙인다.
+    val appName = stringResource(R.string.app_name)
     val available = (updateCheck as? UpdateCheck.Available)?.release
 
     Column {
@@ -131,7 +145,9 @@ private fun UpdateActions(
         }
 
         if (available != null) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // 버튼이 셋까지 생기고(허용 화면·브라우저·링크 복사) 글씨를 크게 쓰는 설정에서는
+            // 한 줄에 들어가지 않는다. Row는 넘치면 잘라내므로 줄바꿈하는 쪽을 쓴다.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (download is ApkDownload.InstallPermissionRequired) {
                     InstallPermissionButton(
                         onAllowInstall = viewModel::openInstallPermissionSettings
@@ -140,6 +156,21 @@ private fun UpdateActions(
 
                 TextButton(onClick = { uriHandler.openUri(available.downloadUrl) }) {
                     Text(stringResource(R.string.update_action_open_in_browser))
+                }
+
+                // 다른 사람에게 보내거나 다른 기기에서 받을 때 쓴다. 안드로이드 13부터는
+                // 복사했다는 안내를 시스템이 스스로 띄우므로 앱이 따로 알리지 않는다.
+                TextButton(
+                    onClick = {
+                        clipboardScope.launch(coroutineFailureLogger) {
+                            clipboard.setClipEntry(
+                                ClipData.newPlainText(appName, available.downloadUrl)
+                                    .toClipEntry()
+                            )
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.update_action_copy_link))
                 }
             }
         }

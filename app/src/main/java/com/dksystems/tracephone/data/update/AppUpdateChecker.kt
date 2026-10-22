@@ -26,6 +26,15 @@ import javax.inject.Singleton
 private val RECHECK_INTERVAL: Duration = Duration.ofMinutes(10)
 
 /**
+ * 직전 확인이 **실패했을 때** 다시 묻기까지 기다리는 시간.
+ *
+ * 실패를 성공과 같이 10분 붙들면, 네트워크가 1분 뒤 돌아와도 화면에 "확인하지 못했습니다"가
+ * 남아 사용자가 고장으로 읽는다. 그렇다고 간격을 없애면 네트워크가 죽은 동안 앞으로 올
+ * 때마다 요청이 쌓인다. 짧게 두어 둘 다 피한다.
+ */
+private val FAILED_RECHECK_INTERVAL: Duration = Duration.ofMinutes(1)
+
+/**
  * "지금 새 버전이 있는가"의 단일 진실 원천.
  *
  * ### 왜 화면이 아니라 여기에 두는가
@@ -66,7 +75,11 @@ class AppUpdateChecker @Inject constructor(
     /**
      * 사용자가 배너를 닫은 버전.
      *
-     * 저장하지 않는다. 앱을 다시 켜면 다시 알린다 — 업데이트 안내는 한 번 닫았다고
+     * **다음 확인에서 지워진다.** 닫기는 '지금은 그만 보여 달라'는 뜻이고, 영구히
+     * 숨기라는 뜻이 아니다. 묻는 주기와 묶여 있으므로 앱을 다시 열어 확인이 돌면
+     * 다시 알린다. 프로세스가 사는 동안 굳어 버리는 것을 막는 유일한 방법이다.
+     *
+     * 저장하지 않는다 — 업데이트 안내는 한 번 닫았다고
      * 사라져야 하는 종류의 알림이 아니고, 저장하면 '어느 버전까지 닫았나'를 관리할
      * DataStore가 하나 더 생긴다.
      */
@@ -103,7 +116,26 @@ class AppUpdateChecker @Inject constructor(
         val elapsed = Duration.ofMillis(clock.millis() - checkedAt)
 
         // 기기 시간을 되돌리면 음수가 된다. 그때는 낡은 것으로 보고 다시 묻는다.
-        return !elapsed.isNegative && elapsed < RECHECK_INTERVAL
+        return !elapsed.isNegative && elapsed < currentRecheckInterval
+    }
+
+    /** 실패를 붙들고 있는 동안에는 더 자주 다시 묻는다. */
+    private val currentRecheckInterval: Duration
+        get() = if (mutableUpdateCheck.value is UpdateCheck.Failed) {
+            FAILED_RECHECK_INTERVAL
+        } else {
+            RECHECK_INTERVAL
+        }
+
+    /**
+     * 확인한 기억을 지워, 다음에 물으면 간격과 무관하게 실제로 확인하게 한다.
+     *
+     * 사용자가 **뒤로가기로 앱을 닫을 때** 부른다. 그렇게 닫은 다음에 다시 여는 것은
+     * 사용자에게 '앱을 새로 켜는 일'이고, 그때 확인이 10분 창에 막혀 조용히 건너뛰어지면
+     * "열었는데 아무 일도 없다"가 된다. 프로세스를 죽이지 않고 같은 결과를 만드는 방법이다.
+     */
+    fun forgetLastCheck() {
+        lastCheckedAtMillis = null
     }
 
     private fun check() {
@@ -112,6 +144,12 @@ class AppUpdateChecker @Inject constructor(
         // 결과가 아니라 **시도**를 기록한다. 실패했을 때 앞으로 올 때마다 다시 두드리면
         // 네트워크가 죽은 동안 요청만 쌓인다.
         lastCheckedAtMillis = clock.millis()
+
+        // 닫은 기억을 여기서 지운다. 그러지 않으면 닫기 한 번이 프로세스가 사는 동안
+        // 배너를 영구히 숨긴다 — 안드로이드는 프로세스를 잘 죽이지 않으므로 '앱을 다시 켜면
+        // 다시 알린다'가 거짓이 된다. 다시 묻는 것과 다시 알리는 것의 주기를 하나로 묶는다.
+        mutableDismissedVersionCode.value = null
+
         mutableUpdateCheck.value = UpdateCheck.Checking
 
         applicationScope.launch {
