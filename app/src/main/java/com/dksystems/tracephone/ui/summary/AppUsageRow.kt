@@ -95,7 +95,10 @@ internal fun AppUsageRow(
     modifier: Modifier = Modifier
 ) {
     val texts = AppUsageRowTexts(
-        share = shareTextOf(usage, rowContext),
+        share = shareTextOf(
+            usageBytes = usage.mobile.totalBytes,
+            listTotalBytes = rowContext.scale.maxBytes
+        ),
         secondary = secondaryTextOf(usage, rowContext.sortOrder)
     )
     val description = rememberAppUsageRowDescription(usage, texts)
@@ -316,15 +319,6 @@ internal data class AppUsageRowContext(
 
     /** 막대와 배경 띠의 길이. 둘 다 모바일을 재므로 같은 값을 쓴다. */
     fun mobileFractionOf(usage: AppUsage): Float = scale.fractionOf(usage.mobile.totalBytes)
-
-    /**
-     * 전체 모바일 중 이 앱의 몫(%). **막대와 분모가 같다.**
-     *
-     * 한때 막대는 '가장 큰 앱' 대비, 몫은 '전체' 대비였다. 그러면 1등 줄에
-     * `54%`라는 숫자와 가득 찬 막대가 나란히 놓여 한 줄 안에서 두 표시가 어긋난다.
-     */
-    fun sharePercentOf(usage: AppUsage): Int =
-        usageSharePercent(usage.mobile.totalBytes, scale.maxBytes)
 }
 
 /**
@@ -332,12 +326,21 @@ internal data class AppUsageRowContext(
  *
  * 1%가 안 되는 몫을 `0%`로 적으면 '쓰지 않았다'로 읽힌다. 그 둘을 구분해야 목록 아래쪽의
  * 작은 앱들이 왜 거기 있는지 설명된다.
+ *
+ * **분모는 막대의 자와 같은 값을 받아야 한다.** 한때 막대는 '가장 큰 앱' 대비, 몫은 '전체'
+ * 대비였다. 그러면 1등 줄에 `54%`라는 숫자와 가득 찬 막대가 나란히 놓여 한 줄 안에서
+ * 두 표시가 어긋난다.
+ *
+ * 줄 하나에 필요한 값만 받는다 - 레이아웃·정렬까지 들고 있는
+ * [AppUsageRowContext]를 요구하지 않아 '모든 앱' 화면도 같은 규칙을 쓸 수 있다.
+ *
+ * @param listTotalBytes 막대의 자([AppListScale.maxBytes])와 같은 값
  */
 @Composable
-private fun shareTextOf(usage: AppUsage, rowContext: AppUsageRowContext): String {
-    val percent = rowContext.sharePercentOf(usage)
+internal fun shareTextOf(usageBytes: Long, listTotalBytes: Long): String {
+    val percent = usageSharePercent(usageBytes, listTotalBytes)
 
-    return if (percent == 0 && usage.mobile.totalBytes > 0L) {
+    return if (percent == 0 && usageBytes > 0L) {
         stringResource(R.string.summary_share_percent_minimal)
     } else {
         stringResource(R.string.summary_share_percent, percent)

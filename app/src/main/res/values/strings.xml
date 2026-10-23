@@ -181,6 +181,12 @@
     <!-- 설치 목록에 없는 앱. '지워짐'이라 단정하지 않는다 - 조회 권한이 미치지 않는 UID일 수도 있다. -->
     <string name="summary_app_not_installed">설치되지 않음</string>
 
+    <!-- 모든 앱 화면. 요약 화면의 합계 카드를 눌러 들어온다. -->
+    <string name="all_apps_title">모든 앱</string>
+    <string name="all_apps_action">모든 앱 보기</string>
+    <!-- 막대의 분모와 줄 수. 분모를 적지 않으면 막대 길이를 값으로 환산할 수 없다. -->
+    <string name="all_apps_totals">모바일 %1$s · 앱 %2$d개</string>
+
     <!-- 예측이지 사실이 아니다. '넘긴다'고 단정하지 않는다. -->
     <string name="monthly_limit_projection">이 속도면 %1$s</string>
 

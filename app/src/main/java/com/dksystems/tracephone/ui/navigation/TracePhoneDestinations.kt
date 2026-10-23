@@ -1,5 +1,6 @@
 package com.dksystems.tracephone.ui.navigation
 
+import com.dksystems.tracephone.domain.model.PeriodUnit
 import com.dksystems.tracephone.domain.model.UsagePeriod
 import java.time.LocalDate
 
@@ -29,9 +30,15 @@ object TracePhoneDestinations {
 
     const val ARG_DATE = "date"
 
+    const val ARG_PERIOD_UNIT = "periodUnit"
+
     const val APP_DETAIL_ROUTE = "app_detail/{$ARG_UID}/{$ARG_START_DATE}/{$ARG_END_DATE}"
 
     const val HOURLY_USAGE_ROUTE = "hourly/{$ARG_UID}/{$ARG_DATE}"
+
+    /** 한 기간의 모든 앱을 한 화면에 늘어놓는 화면. 요약 화면의 합계 카드에서 들어온다. */
+    const val ALL_APPS_ROUTE =
+        "all_apps/{$ARG_START_DATE}/{$ARG_END_DATE}/{$ARG_PERIOD_UNIT}"
 
     /** 앱 하나의 특정 날짜를 시간대별로 보는 화면. 일자별 그래프에서 막대를 눌러 들어온다. */
     fun hourlyUsage(uid: Int, date: LocalDate): String = "hourly/$uid/$date"
@@ -47,4 +54,17 @@ object TracePhoneDestinations {
      */
     fun appDetail(uid: Int, period: UsagePeriod): String =
         "app_detail/$uid/${period.startDate}/${period.endDateInclusive}"
+
+    /**
+     * '모든 앱' 화면 경로를 만든다.
+     *
+     * 기간을 날짜 범위로 넘기는 이유는 [appDetail]과 같다 - 지난주를 보다가 들어온
+     * 사용자에게 이번 주를 보여주면 두 화면의 합계가 어긋난다.
+     *
+     * **단위를 함께 넘긴다.** 날짜 범위만으로는 제목에 `2026년 10월`이라고 적을지
+     * `10월 1일 ~ 10월 31일`이라고 적을지 정할 수 없다. 열거형 이름을 경로에 담아도
+     * 안전하다 - 쓰는 쪽과 읽는 쪽이 같은 빌드라 R8이 이름을 바꿔도 함께 바뀐다.
+     */
+    fun allApps(period: UsagePeriod, unit: PeriodUnit): String =
+        "all_apps/${period.startDate}/${period.endDateInclusive}/${unit.name}"
 }

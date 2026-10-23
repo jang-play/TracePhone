@@ -78,7 +78,9 @@ internal fun describeAppUsageRow(
         // 어느 값에 걸리는 말인지 흐려진다.
         labels.notInstalled.takeIf { !usage.app.isInstalled },
         labels.share.format(texts.share),
-        texts.secondary
+        // '모든 앱' 화면에는 보조값이 없다. 빈 글자를 그대로 두면 문장이 쉼표로 끝나
+        // 스크린 리더가 뜻 없는 쉼을 하나 더 읽는다.
+        texts.secondary.takeIf { it.isNotEmpty() }
     )
 
     return parts.joinToString(labels.separator)

@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.dksystems.tracephone.R
 import com.dksystems.tracephone.core.SyncAge
@@ -41,6 +43,14 @@ import java.time.format.DateTimeFormatter
  * ### 합계를 Wi-Fi와 같은 크기로 두는 이유
  * 합계는 두 회선을 더한 값이라 어느 쪽 편도 아니다. 회선 값들보다 크게 적으면
  * 그것이 이 카드의 결론처럼 보이는데, 이 앱의 결론은 모바일이다.
+ *
+ * ### 누르면 '모든 앱'이 열린다
+ * 이 카드가 `모바일 822 MB`라고 말하므로 **"그 822 MB를 누가 썼나"는 바로 여기서 생기는
+ * 질문이다.** 한도 카드가 같은 논리로 주기 이력을 여는 것과 짝을 이룬다.
+ *
+ * 아래 목록도 같은 질문에 답하지만 한 번에 다섯 줄 남짓만 보여준다 - 줄을 눌러 상세로
+ * 들어가므로 **터치 대상 최소 48dp**가 바닥이기 때문이다. 누르지 않는 화면에서는 그 바닥이
+ * 없어 예닷곱 배가 들어온다. 문을 여기에 둔 덕에 화면 높이는 1dp도 더 쓰지 않는다.
  */
 @Composable
 internal fun UsageTotalsCard(
@@ -48,9 +58,20 @@ internal fun UsageTotalsCard(
     wifiBytes: Long,
     totalBytes: Long,
     syncAge: SyncAge?,
+    onAllAppsSelected: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    // 누르면 무엇이 되는지 스크린 리더에 알린다. `Card(onClick=)`에는 라벨을 넘길 자리가
+    // 없어 semantics로 따로 붙인다. 라벨만 주고 동작을 비우면 활성화가 되지 않으므로
+    // 같은 동작을 함께 넘긴다. 손가락 탭은 Card가 처리하므로 두 번 실행되지 않는다.
+    val allAppsLabel = stringResource(R.string.all_apps_action)
+
+    Card(
+        onClick = onAllAppsSelected,
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { onClick(label = allAppsLabel) { onAllAppsSelected(); true } }
+    ) {
         Column(
             modifier = Modifier.padding(TOTALS_CARD_PADDING),
             verticalArrangement = Arrangement.spacedBy(8.dp)

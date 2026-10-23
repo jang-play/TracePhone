@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.dksystems.tracephone.ui.allapps.AllAppsScreen
 import com.dksystems.tracephone.ui.detail.AppDetailScreen
 import com.dksystems.tracephone.ui.history.BillingCycleHistoryScreen
 import com.dksystems.tracephone.ui.hourly.HourlyUsageScreen
@@ -80,6 +81,9 @@ fun TracePhoneApp(
                 },
                 onCycleHistorySelected = {
                     navController.navigate(TracePhoneDestinations.CYCLE_HISTORY_ROUTE)
+                },
+                onAllAppsSelected = { period, unit ->
+                    navController.navigate(TracePhoneDestinations.allApps(period, unit))
                 }
             )
         }
@@ -111,6 +115,17 @@ fun TracePhoneApp(
                     navController.navigate(TracePhoneDestinations.hourlyUsage(uid, date))
                 }
             )
+        }
+
+        composable(
+            route = TracePhoneDestinations.ALL_APPS_ROUTE,
+            arguments = listOf(
+                navArgument(TracePhoneDestinations.ARG_START_DATE) { type = NavType.StringType },
+                navArgument(TracePhoneDestinations.ARG_END_DATE) { type = NavType.StringType },
+                navArgument(TracePhoneDestinations.ARG_PERIOD_UNIT) { type = NavType.StringType }
+            )
+        ) {
+            AllAppsScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(

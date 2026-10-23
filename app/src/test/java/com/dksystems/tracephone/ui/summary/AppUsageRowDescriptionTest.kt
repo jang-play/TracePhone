@@ -65,6 +65,21 @@ class AppUsageRowDescriptionTest {
         assertEquals("다음, 모바일 1 KB, 전체의 <1%, 모바일 백그라운드 600 B", description)
     }
 
+    /**
+     * '모든 앱' 화면은 보조값을 보여주지 않는다. 빈 글자를 그대로 이으면
+     * 문장이 `…, 전체의 31%, `로 끝나 스크린 리더가 뜻 없는 쉼을 하나 더 읽는다.
+     */
+    @Test
+    fun `보조 값이 없으면 그 칸을 빼고 읽는다`() {
+        val description = describeAppUsageRow(
+            usage = appUsage(mobileBytes = 60_000_000L, wifiBytes = 40_000_000L),
+            texts = AppUsageRowTexts(share = "31%", secondary = ""),
+            labels = labels
+        )
+
+        assertEquals("다음, 모바일 60.00 MB, 전체의 31%", description)
+    }
+
     /** 백그라운드순으로 세워 놓고 그 값을 감추면 순서를 읽을 방법이 없다. */
     @Test
     fun `백그라운드순으로 정렬했을 때만 백그라운드를 적는다`() {

@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dksystems.tracephone.R
 import com.dksystems.tracephone.domain.model.AppListScale
 import com.dksystems.tracephone.domain.model.dailyReferenceBytesOf
+import com.dksystems.tracephone.domain.model.PeriodUnit
 import com.dksystems.tracephone.domain.model.UsagePeriod
 import com.dksystems.tracephone.ui.update.AppUpdateBanner
 
@@ -42,6 +43,8 @@ import com.dksystems.tracephone.ui.update.AppUpdateBanner
  * 여기에는 **그것들을 어떤 순서로 쌓는지**만 남긴다.
  *
  * @param onAppSelected 앱을 선택했을 때 상세 화면으로 이동한다. uid와 현재 기간을 함께 넘긴다.
+ * @param onAllAppsSelected 합계 카드를 눌렀을 때 이 기간의 모든 앱을 한 화면에서 본다.
+ *   단위를 함께 넘긴다 - 날짜 범위만으로는 그쪽 제목에 기간을 어떻게 적을지 정할 수 없다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +52,7 @@ fun UsageSummaryScreen(
     onAppSelected: (uid: Int, period: UsagePeriod) -> Unit,
     onSettingsSelected: () -> Unit,
     onCycleHistorySelected: () -> Unit,
+    onAllAppsSelected: (period: UsagePeriod, unit: PeriodUnit) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: UsageSummaryViewModel = hiltViewModel()
 ) {
@@ -163,6 +167,9 @@ fun UsageSummaryScreen(
                     wifiBytes = uiState.wifiTotalBytes,
                     totalBytes = uiState.totalBytes,
                     syncAge = syncAge.takeIf { uiState.selection.isCurrent },
+                    onAllAppsSelected = {
+                        onAllAppsSelected(uiState.period, uiState.selection.unit)
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
